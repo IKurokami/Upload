@@ -1,4 +1,4 @@
-import{c as M,r as n,j as e,a as _,u as we,L as Te,B as Y,b as Se}from"./index-C-KYe1J7.js";import{C as Ee,b as Ie,c as Re,a as Fe,d as Le}from"./card-CMEH5IAw.js";import{u as Pe,a as ae,c as ne,b as Me,P as L,d as P,e as re,f as _e,E as Ae,I as z}from"./index-BPf8w3iL.js";import{c as oe,R as De,I as $e,B as ze,U as Be}from"./badge-Bv8bkzsE.js";import{T as He,L as A,S as Ve,A as Z,a as J,b as Q,c as W,d as ee,e as te,f as se}from"./separator-Yjr2pN_Q.js";/**
+import{c as M,r as n,j as e,a as _,u as we,L as Te,B as Y,b as Se}from"./index-BKEB3Ocd.js";import{C as Ee,b as Ie,c as Re,a as Fe,d as Le}from"./card-DezjqNeE.js";import{u as Pe,a as ae,c as ne,b as Me,P as L,d as P,e as re,f as _e,E as Ae,I as z}from"./index-DiBfbaeS.js";import{c as oe,R as De,I as $e,B as ze,U as Be}from"./badge-D-nqnIvp.js";import{T as He,L as A,S as Ve,A as Z,a as J,b as Q,c as W,d as ee,e as te,f as se}from"./separator-CxvL1X27.js";/**
  * @license lucide-react v0.477.0 - ISC
  *
  * This source code is licensed under the ISC license.
@@ -31,14 +31,13 @@ import{c as M,r as n,j as e,a as _,u as we,L as Te,B as Y,b as Se}from"./index-C
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${$()}</title>
     <style>
-        body { background: #f2f2f2; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        img { max-width: 100%; height: auto; } /* Added margin for spacing */
-        .image-wrapper { margin-bottom: 0px; } /* Remove extra margin */
+        body { background: #f2f2f2; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        img { max-width: 100%; height: auto; object-fit: contain; object-position: top center;} 
     </style>
 </head>
-<body>
+<body class="container">
     ${i.split(`
-`).map(I=>`<div class="image-wrapper">${I}</div>`).join(`
+`).map(I=>`${I}`).join(`
 `)}
 </body>
 </html>`,p=new Blob([x],{type:"text/html"}),v=URL.createObjectURL(p),y=document.createElement("a");y.href=v,y.download=$(),document.body.appendChild(y),y.click(),setTimeout(()=>{document.body.removeChild(y),URL.revokeObjectURL(v)},100)},G=()=>{if(f==="visual")return a.length>0?e.jsx("div",{className:"flex flex-col items-center",children:a.map((i,x)=>e.jsx("img",{src:i,alt:`Image ${x+1}`,className:"max-w-full h-auto"},i))}):e.jsx("div",{dangerouslySetInnerHTML:{__html:t},className:"prose dark:prose-invert max-w-none"});{const i=a.length>0?a.map(x=>`<img src="${x}" alt="" ${T?'loading="lazy"':""}>`).join(`
