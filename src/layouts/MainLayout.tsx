@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import { Link, Outlet } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Boxes } from "@/components/ui/background-boxes";
 
 interface MainLayoutProps {
   children?: ReactNode;
@@ -30,7 +29,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto p-4">
+      <main className="container mx-auto p-4">
         {children || <Outlet />}
       </main>
 

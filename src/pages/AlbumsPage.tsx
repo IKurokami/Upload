@@ -1,5 +1,4 @@
-// AlbumsPage.tsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,10 +33,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Loader2, Eye, Upload, MoreVertical, Trash2, Edit } from "lucide-react";
+import { Loader2, Eye, Upload, MoreVertical, Trash2, Edit, Search } from "lucide-react";
 import { Link } from "react-router-dom";
+import { InteractiveHoverButton } from "@/components/magicui/interactive-hover-button";
+import { Badge } from "@/components/ui/badge";
 
-// Define types
 interface SavedAlbum {
   id?: number;
   albumName: string;
@@ -52,8 +52,10 @@ const AlbumsPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState<boolean>(false);
   const [newAlbumName, setNewAlbumName] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>(""); // State for search query
+  const [filteredAlbums, setFilteredAlbums] = useState<SavedAlbum[]>([]); // State for filtered albums
 
-  // Function to load saved albums from IndexedDB
+
   const loadSavedAlbums = async (): Promise<void> => {
     setLoading(true);
     const request: IDBOpenDBRequest = indexedDB.open("htmlEditorDB", 1);
@@ -94,6 +96,17 @@ const AlbumsPage: React.FC = () => {
   useEffect(() => {
     loadSavedAlbums();
   }, []);
+
+
+    useEffect(() => {
+    // Filter albums based on search query
+    const filtered = savedAlbums.filter((album) =>
+      album.albumName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredAlbums(filtered);
+  }, [searchQuery, savedAlbums]);
+
+
 
   const handleOpenRenameDialog = (albumId: number) => {
     const currentAlbum = savedAlbums.find((album) => album.id === albumId);
@@ -151,7 +164,6 @@ const AlbumsPage: React.FC = () => {
   const handleRenameAlbum = () => {
     if (selectedAlbumId === null || !newAlbumName.trim()) return;
 
-    // Check if album name already exists (case-insensitive)
     const albumExists = savedAlbums.some(
       (album) =>
         album.albumName.toLowerCase() === newAlbumName.toLowerCase() &&
@@ -221,6 +233,10 @@ const AlbumsPage: React.FC = () => {
     };
   };
 
+    const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto p-4 max-w-4xl">
@@ -243,17 +259,30 @@ const AlbumsPage: React.FC = () => {
     <div className="container mx-auto p-4 max-w-4xl">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold flex items-center gap-2">
-            <Eye size={24} />
-            Albums
-          </CardTitle>
+           <div className="flex items-center justify-between">
+              <CardTitle className="text-2xl font-bold flex items-center gap-2">
+                <Eye size={24} />
+                Albums
+              </CardTitle>
+
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="Search albums..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                    className="pr-10" // Add padding for the search icon
+                />
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" />
+              </div>
+           </div>
           <CardDescription>View and manage your saved albums.</CardDescription>
         </CardHeader>
         <CardContent className="p-4">
-          <ScrollArea className="w-full">
+           <ScrollArea className="w-full h-[500px] rounded-md">
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {savedAlbums.length > 0 ? (
-                savedAlbums.map((album) => (
+              {filteredAlbums.length > 0 ? (
+                filteredAlbums.map((album) => (
                   <div key={album.id} className="relative group">
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -268,18 +297,18 @@ const AlbumsPage: React.FC = () => {
                         </div>
                       </CardHeader>
                       <CardContent className="pt-2">
-                        <p className="text-sm">
-                          {album.imageUrls.length} images
-                        </p>
+                         <p className="text-sm flex items-center">
+                            <Badge variant="secondary" className="mr-1">{album.imageUrls.length}</Badge> images
+                         </p>
                       </CardContent>
                       <CardFooter className="pt-2 flex justify-between items-center">
                         <Link
                           to={`/albums/${album.id}`}
                           className="flex-1 mr-2"
                         >
-                          <Button variant="secondary" className="w-full">
+                          <InteractiveHoverButton className="w-full">
                             View Album
-                          </Button>
+                          </InteractiveHoverButton>
                         </Link>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -315,10 +344,11 @@ const AlbumsPage: React.FC = () => {
                     </Card>
                   </div>
                 ))
-              ) : (
-                <div className="col-span-full text-center py-8">
-                  No albums saved yet.
-                </div>
+               ) : (
+                  <div className="col-span-full text-center py-8">
+                  No matching albums found.
+                  </div>
+
               )}
             </div>
           </ScrollArea>
