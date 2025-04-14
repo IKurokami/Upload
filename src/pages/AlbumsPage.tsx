@@ -19,7 +19,7 @@ import { Eye, Loader2, Search, Upload } from "lucide-react";
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { Link } from "react-router-dom";
 
-interface AlbumsPageProps {}
+interface AlbumsPageProps { }
 
 const AlbumsPage: React.FC<AlbumsPageProps> = () => {
   const [savedAlbums, setSavedAlbums] = useState<SavedAlbum[]>([]);
@@ -149,7 +149,7 @@ const AlbumsPage: React.FC<AlbumsPageProps> = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
+    <div className="container mx-auto p-4 max-w-8xl">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -171,8 +171,8 @@ const AlbumsPage: React.FC<AlbumsPageProps> = () => {
           <CardDescription>View and manage your saved albums.</CardDescription>
         </CardHeader>
         <CardContent className="p-4">
-          <ScrollArea className="w-full h-[500px] rounded-md">
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-flow-row auto-rows-fr">
+          <ScrollArea className="w-full h-[600px] rounded-md">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 grid-flow-row auto-rows-fr">
               {filteredAlbums.length > 0 ? (
                 filteredAlbums.map((album) => (
                   <AlbumCard

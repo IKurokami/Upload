@@ -329,11 +329,11 @@ export const generateHtmlFile = (
   const linksHtml =
     extractedLinks.length > 0
       ? extractedLinks
-          .map(
-            (link) =>
-              `<img src="${link}" alt="" ${lazyLoad ? 'loading="lazy"' : ""}>`
-          )
-          .join("\n")
+        .map(
+          (link) =>
+            `<img src="${link}" alt="" ${lazyLoad ? 'loading="lazy"' : ""}>`
+        )
+        .join("\n")
       : htmlContent;
 
   const fullHtml = `<!DOCTYPE html>

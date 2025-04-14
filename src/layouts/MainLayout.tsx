@@ -10,8 +10,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, FileUp, Album, ScrollText, Settings } from "lucide-react";
+import { Menu, FileUp, Album, ScrollText, Settings, Languages } from "lucide-react";
 import { ArcrylicBgProvider } from "@/contexts/ArcrylicBgContext";
+import { Toaster } from "sonner";
 
 const MainLayout = () => {
   const location = useLocation();
@@ -72,9 +73,8 @@ const MainLayout = () => {
   return (
     <ArcrylicBgProvider value={arcrylicBg}>
       <div
-        className={`flex flex-col min-h-screen ${
-          arcrylicBg ? " app-blur-bg" : ""
-        }`}
+        className={`flex flex-col min-h-screen ${arcrylicBg ? " app-blur-bg" : ""
+          }`}
       >
         {/* Top Loading Bar */}
         <TopLoadingBar progress={progress} isLoading={isLoading} />
@@ -95,7 +95,7 @@ const MainLayout = () => {
               <Link to="/Upload">
                 <Button
                   variant={isActive("/Upload") ? "default" : "ghost"}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 w-32 justify-start"
                 >
                   <FileUp size={18} />
                   <span>Upload</span>
@@ -104,7 +104,7 @@ const MainLayout = () => {
               <Link to="/albums">
                 <Button
                   variant={isActive("/albums") ? "default" : "ghost"}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 w-32 justify-start"
                 >
                   <Album size={18} />
                   <span>Albums</span>
@@ -113,10 +113,19 @@ const MainLayout = () => {
               <Link to="/ocr">
                 <Button
                   variant={isActive("/ocr") ? "default" : "ghost"}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 w-32 justify-start"
                 >
                   <ScrollText size={18} />
                   <span>OCR</span>
+                </Button>
+              </Link>
+              <Link to="/translate">
+                <Button
+                  variant={isActive("/translate") ? "default" : "ghost"}
+                  className="flex items-center gap-2 w-32 justify-start"
+                >
+                  <Languages size={18} />
+                  <span>Translate</span>
                 </Button>
               </Link>
             </div>
@@ -155,6 +164,12 @@ const MainLayout = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
+                    <Link to="/translate" className="flex items-center gap-2 w-full">
+                      <Languages size={18} />
+                      <span>Translate</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
                     <Link
                       to="/settings"
                       className="flex items-center gap-2 w-full"
@@ -177,7 +192,7 @@ const MainLayout = () => {
               <Link to="/settings">
                 <Button
                   variant={isActive("/settings") ? "default" : "ghost"}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 w-32 justify-start"
                 >
                   <Settings size={18} />
                   <span>Settings</span>
@@ -214,6 +229,9 @@ const MainLayout = () => {
         <main className="container mx-auto">
           <AnimatedOutlet />
         </main>
+
+        {/* Toaster */}
+        <Toaster position="bottom-right" />
       </div>
     </ArcrylicBgProvider>
   );

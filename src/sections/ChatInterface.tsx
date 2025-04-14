@@ -402,8 +402,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 )}
               >
                 {message.role === "user" &&
-                !message.isProcessing &&
-                !message.isEditing ? (
+                  !message.isProcessing &&
+                  !message.isEditing ? (
                   <ContextMenu>
                     <ContextMenuTrigger asChild>
                       <div>
@@ -463,10 +463,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                       // Notify parent with original content to ensure consistency
                                       const orig =
                                         typeof message.originalContent ===
-                                        "string"
+                                          "string"
                                           ? message.originalContent
                                           : (message.originalContent as any)
-                                              ?.content || "";
+                                            ?.content || "";
                                       const fallback =
                                         typeof message.content === "string"
                                           ? message.content
@@ -504,42 +504,42 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
                               {/* Display images for user messages */}
                               {(message.imageDataUrls &&
-                              message.imageDataUrls.length > 0
+                                message.imageDataUrls.length > 0
                                 ? message.imageDataUrls
                                 : typeof message.content === "object" &&
-                                  message.content?.imageBase64s) && (
-                                <div className="mt-2 flex flex-wrap gap-2 max-w-full overflow-hidden">
-                                  {(message.imageDataUrls &&
-                                  message.imageDataUrls.length > 0
-                                    ? message.imageDataUrls
-                                    : (typeof message.content === "object" &&
+                                message.content?.imageBase64s) && (
+                                  <div className="mt-2 flex flex-wrap gap-2 max-w-full overflow-hidden">
+                                    {(message.imageDataUrls &&
+                                      message.imageDataUrls.length > 0
+                                      ? message.imageDataUrls
+                                      : (typeof message.content === "object" &&
                                         message.content?.imageBase64s) ||
                                       []
-                                  ).map((url: string, imgIndex: number) => (
-                                    <div
-                                      key={imgIndex}
-                                      className="relative animate-in zoom-in-95 duration-200 max-w-[calc(100%-8px)]"
-                                      style={{
-                                        animationDelay: `${imgIndex * 100}ms`,
-                                      }}
-                                    >
-                                      <img
-                                        src={url}
-                                        alt={`Uploaded ${imgIndex}`}
-                                        className="max-w-full max-h-[150px] rounded-md object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                        onClick={() => setExpandedImage(url)}
+                                    ).map((url: string, imgIndex: number) => (
+                                      <div
+                                        key={imgIndex}
+                                        className="relative animate-in zoom-in-95 duration-200 max-w-[calc(100%-8px)]"
                                         style={{
-                                          objectFit: "cover",
-                                          aspectRatio: "4/3",
+                                          animationDelay: `${imgIndex * 100}ms`,
                                         }}
-                                      />
-                                      <div className="absolute top-1 right-1 bg-black/50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <ZoomIn className="h-3 w-3 text-white" />
+                                      >
+                                        <img
+                                          src={url}
+                                          alt={`Uploaded ${imgIndex}`}
+                                          className="max-w-full max-h-[150px] rounded-md object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                          onClick={() => setExpandedImage(url)}
+                                          style={{
+                                            objectFit: "cover",
+                                            aspectRatio: "4/3",
+                                          }}
+                                        />
+                                        <div className="absolute top-1 right-1 bg-black/50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                          <ZoomIn className="h-3 w-3 text-white" />
+                                        </div>
                                       </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+                                    ))}
+                                  </div>
+                                )}
 
                               {/* Loading indicator for processing */}
                               {message.isProcessing && (
@@ -585,10 +585,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                               // Process images if present
                               const imageUrls =
                                 message.imageDataUrls &&
-                                message.imageDataUrls.length > 0
+                                  message.imageDataUrls.length > 0
                                   ? message.imageDataUrls
                                   : typeof message.content === "object" &&
-                                    message.content?.imageBase64s;
+                                  message.content?.imageBase64s;
 
                               if (imageUrls && imageUrls.length > 0) {
                                 try {
@@ -644,11 +644,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                               // Fix: Check for imageDataUrls first, which is where images are stored in the message
                               const imageUrls =
                                 message.imageDataUrls &&
-                                message.imageDataUrls.length > 0
+                                  message.imageDataUrls.length > 0
                                   ? message.imageDataUrls
                                   : extMessage.imageBase64s ||
-                                    (typeof message.content === "object" &&
-                                      message.content?.imageBase64s);
+                                  (typeof message.content === "object" &&
+                                    message.content?.imageBase64s);
                               const textContent =
                                 typeof message.content === "string"
                                   ? message.content
@@ -722,10 +722,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                           // Process images if present
                           const imageUrls =
                             message.imageDataUrls &&
-                            message.imageDataUrls.length > 0
+                              message.imageDataUrls.length > 0
                               ? message.imageDataUrls
                               : typeof message.content === "object" &&
-                                message.content?.imageBase64s;
+                              message.content?.imageBase64s;
 
                           if (imageUrls && imageUrls.length > 0) {
                             try {
@@ -775,11 +775,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                           // Fix: Check for imageDataUrls first, which is where images are stored in the message
                           const imageUrls =
                             message.imageDataUrls &&
-                            message.imageDataUrls.length > 0
+                              message.imageDataUrls.length > 0
                               ? message.imageDataUrls
                               : extMessage.imageBase64s ||
-                                (typeof message.content === "object" &&
-                                  message.content?.imageBase64s);
+                              (typeof message.content === "object" &&
+                                message.content?.imageBase64s);
                           const textContent =
                             typeof message.content === "string"
                               ? message.content
@@ -884,7 +884,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                   typeof message.originalContent === "string"
                                     ? message.originalContent
                                     : (message.originalContent as any)
-                                        ?.content || "";
+                                      ?.content || "";
                                 const fallback =
                                   typeof message.content === "string"
                                     ? message.content
@@ -919,42 +919,42 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
                         {/* Display images for user messages */}
                         {(message.imageDataUrls &&
-                        message.imageDataUrls.length > 0
+                          message.imageDataUrls.length > 0
                           ? message.imageDataUrls
                           : typeof message.content === "object" &&
-                            message.content?.imageBase64s) && (
-                          <div className="mt-2 flex flex-wrap gap-2 max-w-full overflow-hidden">
-                            {(message.imageDataUrls &&
-                            message.imageDataUrls.length > 0
-                              ? message.imageDataUrls
-                              : (typeof message.content === "object" &&
+                          message.content?.imageBase64s) && (
+                            <div className="mt-2 flex flex-wrap gap-2 max-w-full overflow-hidden">
+                              {(message.imageDataUrls &&
+                                message.imageDataUrls.length > 0
+                                ? message.imageDataUrls
+                                : (typeof message.content === "object" &&
                                   message.content?.imageBase64s) ||
                                 []
-                            ).map((url: string, imgIndex: number) => (
-                              <div
-                                key={imgIndex}
-                                className="relative animate-in zoom-in-95 duration-200 max-w-[calc(100%-8px)]"
-                                style={{
-                                  animationDelay: `${imgIndex * 100}ms`,
-                                }}
-                              >
-                                <img
-                                  src={url}
-                                  alt={`Uploaded ${imgIndex}`}
-                                  className="max-w-full max-h-[150px] rounded-md object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                  onClick={() => setExpandedImage(url)}
+                              ).map((url: string, imgIndex: number) => (
+                                <div
+                                  key={imgIndex}
+                                  className="relative animate-in zoom-in-95 duration-200 max-w-[calc(100%-8px)]"
                                   style={{
-                                    objectFit: "cover",
-                                    aspectRatio: "4/3",
+                                    animationDelay: `${imgIndex * 100}ms`,
                                   }}
-                                />
-                                <div className="absolute top-1 right-1 bg-black/50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <ZoomIn className="h-3 w-3 text-white" />
+                                >
+                                  <img
+                                    src={url}
+                                    alt={`Uploaded ${imgIndex}`}
+                                    className="max-w-full max-h-[150px] rounded-md object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={() => setExpandedImage(url)}
+                                    style={{
+                                      objectFit: "cover",
+                                      aspectRatio: "4/3",
+                                    }}
+                                  />
+                                  <div className="absolute top-1 right-1 bg-black/50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <ZoomIn className="h-3 w-3 text-white" />
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                              ))}
+                            </div>
+                          )}
 
                         {/* Loading indicator for processing */}
                         {message.isProcessing && (
@@ -1193,8 +1193,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               cursor: isDragging
                 ? "grabbing"
                 : zoomLevel > 1
-                ? "grab"
-                : "default",
+                  ? "grab"
+                  : "default",
             }}
           >
             {expandedImage && (
@@ -1259,15 +1259,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Expanded Input Dialog */}
       <Dialog open={isExpanded} onOpenChange={(open) => setIsExpanded(open)}>
         <DialogContent
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-8 flex items-center justify-center"
+          className="sm:max-w-[95%] md:max-w-[90%] lg:max-w-[80%] xl:max-w-[70%] fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-4 sm:p-6 md:p-8 flex items-center justify-center w-full h-[90vh] max-h-[90vh]"
           style={
             {
-              width: "90vw",
-              height: "90vh",
-              minWidth: "90vw",
-              minHeight: "90vh",
-              maxWidth: "90vw",
-              maxHeight: "90vh",
               zIndex: 1000,
               "--hide-dialog-close": "none",
             } as React.CSSProperties
@@ -1280,88 +1274,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               }
             `}
           </style>
-          <div className="relative flex flex-col gap-6 w-full h-full min-h-0">
-            {/* Model selector, file upload, and send button in one row */}
-            <div className="flex items-center justify-between gap-4 mb-4">
-              <div className="flex items-center gap-4">
-                {/* Model selector */}
-                <Select
-                  value={expandedSelectedModel}
-                  onValueChange={(value) => {
-                    setExpandedSelectedModel(value);
-                    onModelChange(value);
-                  }}
-                  disabled={!apiKey || isProcessing}
-                >
-                  <SelectTrigger className="h-9 text-sm font-semibold px-3 py-2 rounded-full min-w-[120px]">
-                    <SelectValue placeholder="Model">
-                      {expandedSelectedModel.includes("flash") ? "2.0" : "2.5"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className="z-[1100]">
-                    <SelectItem value="gemini-2.0-flash-exp-image-generation">
-                      2.0 Flash
-                    </SelectItem>
-                    <SelectItem value="gemini-2.5-pro-preview-03-25">
-                      2.5 Pro
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                {/* File upload */}
-                <div className="flex items-center gap-2">
-                  <input
-                    ref={dialogFileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    disabled={!apiKey || isProcessing}
-                  />
-                  <Button
-                    type="button"
-                    onClick={() => dialogFileInputRef.current?.click()}
-                    className="h-9 px-3 rounded-full"
-                    disabled={!apiKey || isProcessing}
-                  >
-                    <Paperclip className="h-4 w-4 mr-1" />
-                    Add Image
-                  </Button>
-                  {selectedFiles.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={clearAllFiles}
-                      className="h-7 px-2 text-xs hover:bg-destructive hover:text-destructive-foreground rounded-full"
-                    >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      Clear all
-                    </Button>
-                  )}
-                </div>
-              </div>
-              {/* Send button - now positioned at the right side */}
-              <Button
-                type="button"
-                onClick={async () => {
-                  await handleSubmit();
-                  handleDialogSave();
-                }}
-                className="h-9 px-5 rounded-full bg-primary text-primary-foreground font-semibold z-10 shadow-lg flex items-center"
-                disabled={
-                  (!inputValue.trim() && selectedFiles.length === 0) ||
-                  !apiKey ||
-                  isProcessing
-                }
-              >
-                <Send className="h-5 w-5 mr-1" />
-                Send
-              </Button>
-            </div>
+          <div className="relative flex flex-col w-full h-full min-h-0 overflow-hidden">
             {/* File preview area in dialog */}
             {previewUrls.length > 0 && (
               <div className="mb-4">
-                <div className="flex items-center justify-between border-t pt-2">
+                <div className="flex items-center justify-between pt-2">
                   <span className="text-sm text-muted-foreground">
                     {previewUrls.length} file
                     {previewUrls.length !== 1 ? "s" : ""} selected
@@ -1408,13 +1325,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </div>
               </div>
             )}
+
             {/* Tabs for Raw and Markdown */}
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
               <Tabs
                 value={expandedInputValue === undefined ? "raw" : undefined}
                 defaultValue="raw"
                 className="flex-1 flex flex-col min-h-0 overflow-hidden"
-                onValueChange={() => {}}
+                onValueChange={() => { }}
               >
                 <TabsList className="mb-2">
                   <TabsTrigger value="raw">Raw</TabsTrigger>
@@ -1434,11 +1352,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         handleDialogSave();
                       }
                     }}
-                    className="h-full min-h-0 max-h-full w-full text-lg font-mono resize-none overflow-auto"
+                    className="h-full min-h-0 max-h-full w-full text-sm sm:text-base md:text-lg font-mono resize-none overflow-auto p-3 sm:p-4"
                     autoFocus
                   />
                 </TabsContent>
-                <TabsContent value="markdown" className="flex-1 min-h-0">
+                <TabsContent value="markdown" className="flex-1 min-h-0 overflow-hidden">
                   <React.Suspense
                     fallback={
                       <div className="flex items-center justify-center h-full">
@@ -1454,6 +1372,90 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </TabsContent>
               </Tabs>
             </div>
+
+            {/* Controls moved to bottom */}
+            <div className="mt-4 border-t pt-4 flex flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                {/* Model selector */}
+                <Select
+                  value={expandedSelectedModel}
+                  onValueChange={(value) => {
+                    setExpandedSelectedModel(value);
+                    onModelChange(value);
+                  }}
+                  disabled={!apiKey || isProcessing}
+                >
+                  {/* File upload */}
+                  <div className="flex items-center">
+                    <input
+                      ref={dialogFileInputRef}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      disabled={!apiKey || isProcessing}
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => dialogFileInputRef.current?.click()}
+                      className="h-9 px-3 rounded-full text-xs sm:text-sm"
+                      disabled={!apiKey || isProcessing}
+                    >
+                      <Paperclip className="h-4 w-4 mr-1" />
+                      <span className="hidden sm:inline">Add Image</span>
+                      <span className="inline sm:hidden">Image</span>
+                    </Button>
+                  </div>
+
+                  <SelectTrigger className="h-9 text-sm font-semibold px-3 py-2 rounded-full min-w-[120px]">
+                    <SelectValue placeholder="Model">
+                      {expandedSelectedModel.includes("flash") ? "2.0" : "2.5"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="z-[1100]">
+                    <SelectItem value="gemini-2.0-flash-exp-image-generation">
+                      2.0 Flash
+                    </SelectItem>
+                    <SelectItem value="gemini-2.5-pro-preview-03-25">
+                      2.5 Pro
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Clear files button shown only when files are present */}
+                {selectedFiles.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearAllFiles}
+                    className="h-7 px-2 text-xs hover:bg-destructive hover:text-destructive-foreground rounded-full"
+                  >
+                    <Trash2 className="h-3 w-3 mr-1" />
+                    <span className="hidden sm:inline">Clear all</span>
+                    <span className="inline sm:hidden">Clear</span>
+                  </Button>
+                )}
+              </div>
+
+              {/* Send button */}
+              <Button
+                type="button"
+                onClick={async () => {
+                  await handleSubmit();
+                  handleDialogSave();
+                }}
+                className="h-9 px-5 rounded-full bg-primary text-primary-foreground font-semibold z-10 shadow-lg flex items-center"
+                disabled={
+                  (!inputValue.trim() && selectedFiles.length === 0) ||
+                  !apiKey ||
+                  isProcessing
+                }
+              >
+                <Send className="h-5 w-5 mr-1" />
+                Send
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -1468,7 +1470,7 @@ const LazyMarkdownPreview = React.lazy(() =>
       const hasMarkdown = /[*_~`#>|\[\]()]/.test(inputValue);
 
       return (
-        <div className="h-full min-h-[40vh] max-h-[70vh] w-full overflow-auto bg-background border rounded-md p-4 prose prose-lg dark:prose-invert">
+        <div className="h-full min-h-[40vh] max-h-[70vh] w-full overflow-auto bg-background border rounded-md p-2 sm:p-4 prose prose-sm sm:prose-base md:prose-lg dark:prose-invert">
           {hasMarkdown ? (
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {inputValue}

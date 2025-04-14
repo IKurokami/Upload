@@ -11,6 +11,7 @@ const AlbumsPage = lazy(() => import("../pages/AlbumsPage"));
 const AlbumDetailPage = lazy(() => import("../pages/AlbumDetailPage"));
 const ExtractTextPage = lazy(() => import("../pages/ExtractTextPage"));
 const SettingsPage = lazy(() => import("../pages/SettingsPage"));
+const TranslatePage = lazy(() => import("../pages/TranslatePage"));
 
 const router = createBrowserRouter([
   {
@@ -22,6 +23,7 @@ const router = createBrowserRouter([
       { path: "albums", element: <AlbumsPage /> },
       { path: "albums/:albumId", element: <AlbumDetailPage /> },
       { path: "ocr", element: <ExtractTextPage /> },
+      { path: "translate", element: <TranslatePage /> },
       { path: "settings", element: <SettingsPage /> },
     ],
   },
