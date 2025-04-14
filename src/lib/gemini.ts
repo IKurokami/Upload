@@ -1,4 +1,4 @@
-import { GeminiOptions, FunctionDeclaration } from "@/types/GeminiOptions";
+import { GeminiOptions } from "@/types/GeminiOptions";
 import { GeminiResponse } from "@/types/GeminiResponse";
 import {
   Content,
@@ -428,169 +428,169 @@ Before beginning the translation:
   return processMultipleWithGemini([], apiKey, options);
 };
 
-/**
- * Function to get mapping table with tool calling support
- */
-export const getMappingTable = async (
-  apiKey: string,
-  modelName: string
-): Promise<string> => {
-  const { GoogleGenerativeAI } = await import("@google/generative-ai");
-  const genAI = new GoogleGenerativeAI(apiKey);
+// /**
+//  * Function to get mapping table with tool calling support
+//  */
+// export const getMappingTable = async (
+//   apiKey: string,
+//   modelName: string
+// ): Promise<string> => {
+//   const { GoogleGenerativeAI } = await import("@google/generative-ai");
+//   const genAI = new GoogleGenerativeAI(apiKey);
 
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    tools: [{
-      functionDeclarations: [
-        {
-          name: "get_mapping_table",
-          description: "Get the current mapping table",
-          parameters: {
-            type: "object",
-            properties: {},
-            required: [],
-          },
-        } as any,
-      ],
-    }],
-  }, {});
+//   const model = genAI.getGenerativeModel({
+//     model: modelName,
+//     tools: [{
+//       functionDeclarations: [
+//         {
+//           name: "get_mapping_table",
+//           description: "Get the current mapping table",
+//           parameters: {
+//             type: "object",
+//             properties: {},
+//             required: [],
+//           },
+//         } as any,
+//       ],
+//     }],
+//   }, {});
 
-  try {
-    // This is a stub function - in a real implementation, you would retrieve
-    // the mapping table from your database or storage
-    // For now, we'll just return a sample mapping table
-    return "| Term / Name | Transcription | Type (Person/Place/Other) | Gender (if person) | Notes |\n|:----------- |:------------- |:------------------------- |:------------------ |:------ |";
-  } catch (error) {
-    console.error("Error getting mapping table:", error);
-    throw error;
-  }
-};
+//   try {
+//     // This is a stub function - in a real implementation, you would retrieve
+//     // the mapping table from your database or storage
+//     // For now, we'll just return a sample mapping table
+//     return "| Term / Name | Transcription | Type (Person/Place/Other) | Gender (if person) | Notes |\n|:----------- |:------------- |:------------------------- |:------------------ |:------ |";
+//   } catch (error) {
+//     console.error("Error getting mapping table:", error);
+//     throw error;
+//   }
+// };
 
-/**
- * Function to get relationships table with tool calling support
- */
-export const getRelationshipsTable = async (
-  apiKey: string,
-  modelName: string
-): Promise<string> => {
-  const { GoogleGenerativeAI } = await import("@google/generative-ai");
-  const genAI = new GoogleGenerativeAI(apiKey);
+// /**
+//  * Function to get relationships table with tool calling support
+//  */
+// export const getRelationshipsTable = async (
+//   apiKey: string,
+//   modelName: string
+// ): Promise<string> => {
+//   const { GoogleGenerativeAI } = await import("@google/generative-ai");
+//   const genAI = new GoogleGenerativeAI(apiKey);
 
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    tools: [{
-      functionDeclarations: [
-        {
-          name: "get_relationships_table",
-          description: "Get the current relationships table",
-          parameters: {
-            type: "object",
-            properties: {},
-            required: [],
-          },
-        } as any,
-      ],
-    }],
-  }, {});
+//   const model = genAI.getGenerativeModel({
+//     model: modelName,
+//     tools: [{
+//       functionDeclarations: [
+//         {
+//           name: "get_relationships_table",
+//           description: "Get the current relationships table",
+//           parameters: {
+//             type: "object",
+//             properties: {},
+//             required: [],
+//           },
+//         } as any,
+//       ],
+//     }],
+//   }, {});
 
-  try {
-    // This is a stub function - in a real implementation, you would retrieve
-    // the relationships table from your database or storage
-    // For now, we'll just return a sample relationships table
-    return "| Character A | Character B | Relationship | Address Terms (A→B) | Address Terms (B→A) | Notes |\n|:----------- |:----------- |:------------ |:------------------- |:------------------- |:----- |";
-  } catch (error) {
-    console.error("Error getting relationships table:", error);
-    throw error;
-  }
-};
+//   try {
+//     // This is a stub function - in a real implementation, you would retrieve
+//     // the relationships table from your database or storage
+//     // For now, we'll just return a sample relationships table
+//     return "| Character A | Character B | Relationship | Address Terms (A→B) | Address Terms (B→A) | Notes |\n|:----------- |:----------- |:------------ |:------------------- |:------------------- |:----- |";
+//   } catch (error) {
+//     console.error("Error getting relationships table:", error);
+//     throw error;
+//   }
+// };
 
-/**
- * Function to set mapping table with tool calling support
- */
-export const setMappingTable = async (
-  mappingTable: string,
-  apiKey: string,
-  modelName: string
-): Promise<boolean> => {
-  const { GoogleGenerativeAI } = await import("@google/generative-ai");
-  const genAI = new GoogleGenerativeAI(apiKey);
+// /**
+//  * Function to set mapping table with tool calling support
+//  */
+// export const setMappingTable = async (
+//   mappingTable: string,
+//   apiKey: string,
+//   modelName: string
+// ): Promise<boolean> => {
+//   const { GoogleGenerativeAI } = await import("@google/generative-ai");
+//   const genAI = new GoogleGenerativeAI(apiKey);
 
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    tools: [{
-      functionDeclarations: [
-        {
-          name: "set_mapping_table",
-          description: "Set the mapping table",
-          parameters: {
-            type: "object",
-            properties: {
-              mapping_table: {
-                type: "string",
-                description: "The mapping table in markdown format",
-              },
-            },
-            required: ["mapping_table"],
-          },
-        } as any,
-      ],
-    }],
-  }, {});
+//   const model = genAI.getGenerativeModel({
+//     model: modelName,
+//     tools: [{
+//       functionDeclarations: [
+//         {
+//           name: "set_mapping_table",
+//           description: "Set the mapping table",
+//           parameters: {
+//             type: "object",
+//             properties: {
+//               mapping_table: {
+//                 type: "string",
+//                 description: "The mapping table in markdown format",
+//               },
+//             },
+//             required: ["mapping_table"],
+//           },
+//         } as any,
+//       ],
+//     }],
+//   }, {});
 
-  try {
-    // This is a stub function - in a real implementation, you would save
-    // the mapping table to your database or storage
-    // For now, we'll just return success
-    return true;
-  } catch (error) {
-    console.error("Error setting mapping table:", error);
-    throw error;
-  }
-};
+//   try {
+//     // This is a stub function - in a real implementation, you would save
+//     // the mapping table to your database or storage
+//     // For now, we'll just return success
+//     return true;
+//   } catch (error) {
+//     console.error("Error setting mapping table:", error);
+//     throw error;
+//   }
+// };
 
-/**
- * Function to set relationships table with tool calling support
- */
-export const setRelationshipsTable = async (
-  relationshipsTable: string,
-  apiKey: string,
-  modelName: string
-): Promise<boolean> => {
-  const { GoogleGenerativeAI } = await import("@google/generative-ai");
-  const genAI = new GoogleGenerativeAI(apiKey);
+// /**
+//  * Function to set relationships table with tool calling support
+//  */
+// export const setRelationshipsTable = async (
+//   relationshipsTable: string,
+//   apiKey: string,
+//   modelName: string
+// ): Promise<boolean> => {
+//   const { GoogleGenerativeAI } = await import("@google/generative-ai");
+//   const genAI = new GoogleGenerativeAI(apiKey);
 
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    tools: [{
-      functionDeclarations: [
-        {
-          name: "set_relationships_table",
-          description: "Set the relationships table",
-          parameters: {
-            type: "object",
-            properties: {
-              relationships_table: {
-                type: "string",
-                description: "The relationships table in markdown format",
-              },
-            },
-            required: ["relationships_table"],
-          },
-        } as any,
-      ],
-    }],
-  }, {});
+//   const model = genAI.getGenerativeModel({
+//     model: modelName,
+//     tools: [{
+//       functionDeclarations: [
+//         {
+//           name: "set_relationships_table",
+//           description: "Set the relationships table",
+//           parameters: {
+//             type: "object",
+//             properties: {
+//               relationships_table: {
+//                 type: "string",
+//                 description: "The relationships table in markdown format",
+//               },
+//             },
+//             required: ["relationships_table"],
+//           },
+//         } as any,
+//       ],
+//     }],
+//   }, {});
 
-  try {
-    // This is a stub function - in a real implementation, you would save
-    // the relationships table to your database or storage
-    // For now, we'll just return success
-    return true;
-  } catch (error) {
-    console.error("Error setting relationships table:", error);
-    throw error;
-  }
-};
+//   try {
+//     // This is a stub function - in a real implementation, you would save
+//     // the relationships table to your database or storage
+//     // For now, we'll just return success
+//     return true;
+//   } catch (error) {
+//     console.error("Error setting relationships table:", error);
+//     throw error;
+//   }
+// };
 
 // For backward compatibility
 export const runGemini = async (

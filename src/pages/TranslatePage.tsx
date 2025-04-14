@@ -16,8 +16,6 @@ import {
   Clipboard,
   CheckCircle2,
   ArrowRight,
-  Download,
-  Upload,
   Lightbulb,
   Plus,
   Trash2,
@@ -32,7 +30,7 @@ import { useArcrylicBg } from "@/contexts/ArcrylicBgContext";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getDataFromDB, saveDataToDB } from "@/lib/db";
-import { runGeminiChat, runGeminiTranslation } from "@/lib/gemini";
+import { runGeminiTranslation } from "@/lib/gemini";
 import { toast } from "sonner";
 
 // Type definitions
@@ -71,7 +69,7 @@ const TranslatePage: React.FC = () => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
   // Scroll to top button visibility
-  const [showScrollButton, setShowScrollButton] = useState<boolean>(true);
+  const [, setShowScrollButton] = useState<boolean>(true);
 
   // Model selection
   const [selectedModel, setSelectedModel] = useState<string>("gemini-2.0-flash-exp-image-generation");
@@ -146,10 +144,6 @@ const TranslatePage: React.FC = () => {
   };
 
   // Handle API key change
-  const handleApiKeyChange = async (newApiKey: string) => {
-    setApiKey(newApiKey);
-    await saveDataToDB("apiKey", newApiKey);
-  };
 
   // Parse markdown table to array of objects
   const parseMarkdownTable = (markdown: string, isMapping: boolean): MappingEntry[] | RelationshipEntry[] => {
@@ -460,8 +454,6 @@ const TranslatePage: React.FC = () => {
           const relationshipsMarkdown = generateMarkdownTable(relationshipsTable, false);
 
           // Get the current collection name for context
-          const currentCollection = collections.find(c => c.id === selectedCollectionId);
-          const collectionContext = currentCollection ? `Using mapping tables from collection: "${currentCollection.name}"` : "";
 
           const response = await runGeminiTranslation(
             inputText,
