@@ -1,43 +1,221 @@
-import { ReactNode } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import AnimatedOutlet from "@/components/animation/AnimatedOutlet";
+import { TopLoadingBar } from "@/components/animation/TopLoadingBar";
 import { Button } from "@/components/ui/button";
+import { ThemeSwitcher } from "@/components/ui/theme-switcher";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Menu, FileUp, Album, ScrollText, Settings } from "lucide-react";
+import { ArcrylicBgProvider } from "@/contexts/ArcrylicBgContext";
 
-interface MainLayoutProps {
-  children?: ReactNode;
-}
+const MainLayout = () => {
+  const location = useLocation();
 
-const MainLayout = ({ children }: MainLayoutProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    setIsLoading(true);
+    setProgress(80);
+
+    let frame: number;
+    let value = 0;
+    function animate() {
+      value += Math.random() * 50 + 5;
+      if (value < 90) {
+        setProgress(value);
+        frame = window.setTimeout(animate, 100);
+      } else {
+        setProgress(100);
+        frame = window.setTimeout(() => {
+          setIsLoading(false);
+          setProgress(0);
+        }, 300);
+      }
+    }
+    animate();
+
+    return () => {
+      clearTimeout(frame);
+    };
+  }, [location.pathname]);
+
+  const isActive = (path: string) => location.pathname === path;
+
+  const [arcrylicBg, setArcrylicBg] = useState(false);
+
+  useEffect(() => {
+    const checkArcrylic = () => {
+      const html = document.documentElement;
+      const isDark = html.classList.contains("dark");
+      const subTheme = localStorage.getItem("darkSubTheme");
+      setArcrylicBg(isDark && subTheme === "arcrylic");
+    };
+    checkArcrylic();
+    window.addEventListener("storage", checkArcrylic);
+    const observer = new MutationObserver(checkArcrylic);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => {
+      window.removeEventListener("storage", checkArcrylic);
+      observer.disconnect();
+    };
+  }, []);
+
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header */}
-      <header className="text-white p-4 shadow-md">
-        <nav className="container mx-auto flex justify-between items-center">
-          <span className="text-lg font-semibold">Truyen</span>
-          <div className="flex gap-4">
-            <Link to="/upload">
-              <Button variant="ghost" className="text-white">
-                Upload
-              </Button>
+    <ArcrylicBgProvider value={arcrylicBg}>
+      <div
+        className={`flex flex-col min-h-screen ${
+          arcrylicBg ? " app-blur-bg" : ""
+        }`}
+      >
+        {/* Top Loading Bar */}
+        <TopLoadingBar progress={progress} isLoading={isLoading} />
+        {/* Header */}
+        <header className="backdrop-blur-xs border-b sticky top-0 z-50">
+          <nav className="container mx-auto flex justify-between items-center p-4">
+            <Link to="/Upload" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full flex items-center justify-center">
+                <span className="font-bold">Truyen</span>
+              </div>
+              <span className="text-xl font-bold bg-clip-text text-transparent">
+                Truyen
+              </span>
             </Link>
-            <Link to="/albums">
-              <Button variant="ghost" className="text-white">
-                Albums
-              </Button>
-            </Link>
+
+            {/* Desktop navigation */}
+            <div className="hidden md:flex items-center gap-1">
+              <Link to="/Upload">
+                <Button
+                  variant={isActive("/Upload") ? "default" : "ghost"}
+                  className="flex items-center gap-2"
+                >
+                  <FileUp size={18} />
+                  <span>Upload</span>
+                </Button>
+              </Link>
+              <Link to="/albums">
+                <Button
+                  variant={isActive("/albums") ? "default" : "ghost"}
+                  className="flex items-center gap-2"
+                >
+                  <Album size={18} />
+                  <span>Albums</span>
+                </Button>
+              </Link>
+              <Link to="/ocr">
+                <Button
+                  variant={isActive("/ocr") ? "default" : "ghost"}
+                  className="flex items-center gap-2"
+                >
+                  <ScrollText size={18} />
+                  <span>OCR</span>
+                </Button>
+              </Link>
+            </div>
+
+            {/* Mobile navigation */}
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="border">
+                  <DropdownMenuItem>
+                    <Link
+                      to="/Upload"
+                      className="flex items-center gap-2 w-full"
+                    >
+                      <FileUp size={18} />
+                      <span>Upload</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link
+                      to="/albums"
+                      className="flex items-center gap-2 w-full"
+                    >
+                      <Album size={18} />
+                      <span>Albums</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="/ocr" className="flex items-center gap-2 w-full">
+                      <ScrollText size={18} />
+                      <span>OCR</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link
+                      to="/settings"
+                      className="flex items-center gap-2 w-full"
+                    >
+                      <Settings size={18} />
+                      <span>Settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <div className="w-full flex justify-center">
+                      <ThemeSwitcher />
+                    </div>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            {/* Right side: Theme switcher and Settings (desktop only) */}
+            <div className="hidden md:flex items-center gap-2">
+              <ThemeSwitcher />
+              <Link to="/settings">
+                <Button
+                  variant={isActive("/settings") ? "default" : "ghost"}
+                  className="flex items-center gap-2"
+                >
+                  <Settings size={18} />
+                  <span>Settings</span>
+                </Button>
+              </Link>
+            </div>
+          </nav>
+        </header>
+
+        {/* Hero Section - Only on homepage */}
+        {location.pathname === "/" && (
+          <div className="relative py-20 px-4 overflow-hidden">
+            <div className="absolute inset-0 z-0"></div>
+            <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full blur-3xl z-0"></div>
+            <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full blur-3xl z-0"></div>
+
+            <div className="container mx-auto relative z-10 text-center">
+              <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent">
+                Truyen Platform
+              </h1>
+              <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
+                The next generation content management system powered by
+                blockchain technology
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                <Button className="border-0">Get Started</Button>
+                <Button variant="outline">Learn More</Button>
+              </div>
+            </div>
           </div>
-        </nav>
-      </header>
+        )}
 
-      {/* Main Content */}
-      <main className="container mx-auto p-4">
-        {children || <Outlet />}
-      </main>
-
-      {/* Footer */}
-      <footer className="text-white text-center p-4 mt-4">
-        <p>&copy; {new Date().getFullYear()} Truyen. All rights reserved.</p>
-      </footer>
-    </div>
+        {/* Main Content */}
+        <main className="container mx-auto">
+          <AnimatedOutlet />
+        </main>
+      </div>
+    </ArcrylicBgProvider>
   );
 };
 

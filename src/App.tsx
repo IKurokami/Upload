@@ -1,5 +1,6 @@
 import { AppRouter } from "./routers";
 import { ThemeProvider } from "next-themes";
+import "./App.css";
 
 function App() {
   return (

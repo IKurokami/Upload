@@ -41,9 +41,8 @@ import {
 import {
   SortableContext,
   arrayMove,
-    verticalListSortingStrategy,
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Separator } from "@/components/ui/separator";
 import { SortableItem } from "@/components/common/sortable-item";
 
 interface SavedAlbum {
@@ -187,20 +186,23 @@ const AlbumDetailPage: React.FC = () => {
       .join("\n");
 
     const fullHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${albumName}</title>
-    <style>
-        body { background: #f2f2f2; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center;}
-        img { max-width: 100%; height: auto; margin-bottom: 10px;}
-    </style>
-</head>
-<body>
-   ${linksHtml}
-</body>
-</html>`;
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${albumName}</title>
+          <style>
+              body { background: #f2f2f2; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+              img { max-width: 100%; height: auto; object-fit: contain; object-position: top center;} 
+          </style>
+      </head>
+      <body class="container">
+          ${linksHtml
+            .split("\n")
+            .map((imgTag) => `${imgTag}`)
+            .join("\n")}
+      </body>
+      </html>`;
 
     const blob: Blob = new Blob([fullHtml], { type: "text/html" });
     const url: string = URL.createObjectURL(blob);
@@ -244,8 +246,8 @@ const AlbumDetailPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4 max-w-4xl">
-        <Card>
+      <div className="flex flex-col flex-1 min-h-0 h-full">
+        <Card className="flex flex-col flex-1 min-h-0 h-full max-w-4xl mx-auto my-2">
           <CardHeader>
             <CardTitle>Album Detail</CardTitle>
           </CardHeader>
@@ -260,8 +262,8 @@ const AlbumDetailPage: React.FC = () => {
 
   if (!album) {
     return (
-      <div className="container mx-auto p-4 max-w-4xl">
-        <Card>
+      <div className="flex flex-col flex-1 min-h-0 h-full">
+        <Card className="flex flex-col flex-1 min-h-0 h-full max-w-4xl mx-auto my-2">
           <CardHeader>
             <CardTitle>Album Detail</CardTitle>
           </CardHeader>
@@ -285,8 +287,8 @@ const AlbumDetailPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <Card>
+    <div className="flex flex-col flex-1 min-h-0 h-full my-2">
+      <Card className="flex flex-col flex-1 min-h-0 h-full max-w-4xl mx-auto overflow-hidden">
         <CardHeader>
           <CardTitle className="text-2xl font-bold flex items-center gap-2">
             <Eye size={24} className="text-blue-600" />
@@ -295,20 +297,34 @@ const AlbumDetailPage: React.FC = () => {
           <CardDescription>View and update album details.</CardDescription>
         </CardHeader>
 
-        <CardContent className="p-4">
+        <CardContent className="p-4 flex-1 min-h-0 overflow-auto my-2">
           {!editMode && (
-            <ScrollArea className="h-[600px] w-full rounded-md border p-4">
-              <div className="flex flex-col items-center">
-                {imageUrls.map((url, index) => (
-                  <img
-                    key={index}
-                    src={url}
-                    alt={`Image ${index + 1}`}
-                    className="max-w-1/2 h-auto rounded-md" // Keep existing styles
-                  />
-                ))}
-              </div>
-            </ScrollArea>
+            <div>
+              <Label className="my-2">Preview</Label>
+
+              <ScrollArea className="w-full h-[40vh] rounded-md border p-0">
+                <div
+                  className="h-full w-full flex flex-col items-center justify-center p-4"
+                  style={{ height: "100%" }}
+                >
+                  {imageUrls.length === 0 ? (
+                    <div className="flex items-center justify-center w-full h-full text-gray-400">
+                      No images in this album.
+                    </div>
+                  ) : (
+                    imageUrls.map((url, index) => (
+                      <img
+                        key={index}
+                        src={url}
+                        alt={`Image ${index + 1}`}
+                        className="block w-auto h-full max-h-full object-contain"
+                        style={{ height: "100%", maxHeight: "100%" }}
+                      />
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
           )}
           {editMode && (
             <>
@@ -322,7 +338,7 @@ const AlbumDetailPage: React.FC = () => {
                     value={imageUrlsText}
                     onChange={(e) => setImageUrlsText(e.target.value)}
                     placeholder="Enter image URLs, one per line"
-                    className="max-h-[400px] font-mono text-sm"
+                    className="max-h-[40vh] font-mono text-sm"
                   />
                 </div>
                 <div>
@@ -332,20 +348,30 @@ const AlbumDetailPage: React.FC = () => {
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                   >
-                    <ScrollArea className="h-[400px] w-full rounded-md border">
+                    <ScrollArea className="w-full h-[40vh] rounded-md border overflow-auto">
                       <SortableContext
                         items={imageUrls}
                         strategy={verticalListSortingStrategy}
                       >
-                        <div className="flex flex-col items-center">
-                          {imageUrls.map((url, index) => (
-                            <SortableItem
-                              key={url}
-                              id={url}
-                              url={url}
-                              index={index}
-                            />
-                          ))}
+                        <div
+                          className="h-full flex flex-col items-center justify-center p-4"
+                          style={{ height: "100%" }}
+                        >
+                          {imageUrls.length === 0 ? (
+                            <div className="flex items-center justify-center w-full h-full text-gray-400">
+                              No images in this album.
+                            </div>
+                          ) : (
+                            imageUrls.map((url, index) => (
+                              <SortableItem
+                                key={url}
+                                id={url}
+                                url={url}
+                                index={index}
+                                // If SortableItem renders an img, ensure it uses h-full, max-h-full, object-contain
+                              />
+                            ))
+                          )}
                         </div>
                       </SortableContext>
                     </ScrollArea>
@@ -361,7 +387,6 @@ const AlbumDetailPage: React.FC = () => {
                   </DndContext>
                 </div>
               </div>
-              <Separator className="my-4" />
             </>
           )}
 

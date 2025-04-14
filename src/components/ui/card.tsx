@@ -1,13 +1,16 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { useArcrylicBg } from "@/contexts/ArcrylicBgContext"
 
 function Card({ className, ...props }: React.ComponentProps<"div">) {
+  const arcrylicBg = useArcrylicBg();
   return (
     <div
       data-slot="card"
       className={cn(
         "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        arcrylicBg && "arcrylic-blur",
         className
       )}
       {...props}

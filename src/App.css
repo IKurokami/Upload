@@ -1,0 +1,12 @@
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(207, 149, 149, 0.6) rgba(0, 0, 0, 0.1);
+}
+
+body {
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(207, 149, 149, 0.6) rgba(0, 0, 0, 0.1);
+}
