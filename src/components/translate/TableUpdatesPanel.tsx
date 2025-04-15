@@ -1,7 +1,15 @@
 import React from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { X, ChevronUp, ChevronDown } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { X, ChevronUp, ChevronDown, Clock, CheckCircle, ChevronsUp, ChevronsDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MappingEntry {
@@ -56,123 +64,185 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
   setShowUpdateConfirmation,
 }) => {
   if (!showTableUpdates) return null;
+  
   return (
     <Card
       className={cn(
-        "fixed bottom-20 right-6 w-96 max-w-[calc(100vw-3rem)] z-[9998] shadow-lg transition-all duration-300 ease-in-out",
+        "fixed bottom-20 right-6 w-96 max-w-[calc(100vw-3rem)] z-[9998] shadow-lg transition-all duration-300 ease-in-out rounded-xl border-border/40",
         isTableUpdatesAnimating ? "translate-y-4 opacity-0" : "translate-y-0 opacity-100",
         arcrylicBg && "arcrylic-blur"
       )}
     >
-      <div className="p-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Table Updates</h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowTableUpdates(false)}
-            className="h-8 w-8 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+      <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
+        <div className="flex items-center space-x-2">
+          <CardTitle className="text-base font-medium">Table Updates</CardTitle>
+          <Badge variant="outline" className="ml-2 text-xs">
+            {pendingTableUpdates.length}
+          </Badge>
         </div>
-
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto">
-          {pendingTableUpdates.map((update) => (
-            <div key={update.id} className="border rounded-lg p-3">
-              <div
-                className="flex justify-between items-start cursor-pointer"
-                onClick={() => toggleEntryExpansion(update.id)}
-              >
-                <div>
-                  <span className="text-sm font-medium">
-                    {update.type === 'mapping' ? 'Mapping Table' : 'Relationships Table'} Update
-                  </span>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(update.timestamp).toLocaleString()}
-                  </p>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowTableUpdates(false)}
+          className="h-8 w-8 rounded-full"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </CardHeader>
+      
+      <CardContent className="p-3">
+        <ScrollArea className="max-h-[60vh] pr-2 overflow-y-auto">
+          <div className="space-y-3">
+            {pendingTableUpdates.length > 0 ? (
+              pendingTableUpdates.map((update) => (
+                <div key={update.id} className="border rounded-lg overflow-hidden">
+                  <div className="bg-muted/30 p-3 flex justify-between items-center">
+                    <div className="flex flex-col">
+                      <div className="flex items-center">
+                        <span className="text-sm font-medium">
+                          {update.type === 'mapping' ? 'Mapping Table' : 'Relationships Table'}
+                        </span>
+                        <Badge 
+                          variant={
+                            update.status === 'pending' ? 'outline' :
+                            update.status === 'approved' ? 'secondary' : 'destructive'
+                          }
+                          className="ml-2 text-xs px-1.5"
+                        >
+                          {update.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center text-xs text-muted-foreground mt-1">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {new Date(update.timestamp).toLocaleString()}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 rounded-full"
+                        onClick={() => toggleEntryExpansion(update.id)}
+                      >
+                        {expandedEntries.has(update.id) ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8"
+                              onClick={() => {
+                                setCurrentUpdateEntry(update);
+                                setShowUpdateConfirmation(true);
+                              }}
+                            >
+                              Review
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="text-xs">Review and approve/reject changes</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                  
+                  {expandedEntries.has(update.id) && (
+                    <div className="p-3 space-y-3 bg-background">
+                      {/* Added Entries */}
+                      {update.updates.added.length > 0 && (
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium flex items-center">
+                              <ChevronsUp className="h-3.5 w-3.5 mr-1 text-emerald-500" />
+                              Added Entries
+                            </span>
+                            <Badge variant="outline" className="text-xs px-1.5 h-5">
+                              {update.updates.added.length}
+                            </Badge>
+                          </div>
+                          <ScrollArea className="h-[120px]">
+                            <div className="bg-muted/30 rounded-md p-2.5">
+                              {update.updates.added.map((entry: any, idx) => (
+                                <div 
+                                  key={idx} 
+                                  className="text-xs py-1.5 px-2 rounded mb-1 hover:bg-accent/50 transition-colors"
+                                >
+                                  {update.type === 'mapping' ? (
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">{entry.term}</span>
+                                      <span className="text-muted-foreground">→ {entry.transcription}</span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">{entry.characterA}</span>
+                                      <span className="text-muted-foreground">→ {entry.characterB}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        </div>
+                      )}
+                      
+                      {/* Updated Entries */}
+                      {update.updates.updated.length > 0 && (
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-medium flex items-center">
+                              <ChevronsDown className="h-3.5 w-3.5 mr-1 text-blue-500" />
+                              Updated Entries
+                            </span>
+                            <Badge variant="outline" className="text-xs px-1.5 h-5">
+                              {update.updates.updated.length}
+                            </Badge>
+                          </div>
+                          <ScrollArea className="h-[120px]">
+                            <div className="bg-muted/30 rounded-md p-2.5">
+                              {update.updates.updated.map((entry: any, idx) => (
+                                <div 
+                                  key={idx} 
+                                  className="text-xs py-1.5 px-2 rounded mb-1 hover:bg-accent/50 transition-colors"
+                                >
+                                  {update.type === 'mapping' ? (
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">{entry.term}</span>
+                                      <span className="text-muted-foreground">→ {entry.transcription}</span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex justify-between">
+                                      <span className="font-medium">{entry.characterA}</span>
+                                      <span className="text-muted-foreground">→ {entry.characterB}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </ScrollArea>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={e => {
-                      e.stopPropagation();
-                      toggleEntryExpansion(update.id);
-                    }}
-                  >
-                    {expandedEntries.has(update.id) ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={e => {
-                      e.stopPropagation();
-                      setCurrentUpdateEntry(update);
-                      setShowUpdateConfirmation(true);
-                    }}
-                  >
-                    Review
-                  </Button>
-                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <CheckCircle className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                <p className="text-sm text-muted-foreground">No pending updates</p>
+                <p className="text-xs text-muted-foreground mt-1">Updates will appear here when available</p>
               </div>
-
-              {expandedEntries.has(update.id) && (
-                <div className="mt-3 pt-3 border-t space-y-2">
-                  <div className="text-sm">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium">Added Entries ({update.updates.added.length})</span>
-                    </div>
-                    {update.updates.added.length > 0 && (
-                      <div className="bg-muted/50 rounded-md p-2 max-h-32 overflow-y-auto">
-                        {update.updates.added.map((entry: any, idx) => (
-                          <div key={idx} className="text-xs mb-1">
-                            {update.type === 'mapping' ? (
-                              <>{entry.term} → {entry.transcription}</>
-                            ) : (
-                              <>{entry.characterA} → {entry.characterB}</>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="text-sm">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-medium">Updated Entries ({update.updates.updated.length})</span>
-                    </div>
-                    {update.updates.updated.length > 0 && (
-                      <div className="bg-muted/50 rounded-md p-2 max-h-32 overflow-y-auto">
-                        {update.updates.updated.map((entry: any, idx) => (
-                          <div key={idx} className="text-xs mb-1">
-                            {update.type === 'mapping' ? (
-                              <>{entry.term} → {entry.transcription}</>
-                            ) : (
-                              <>{entry.characterA} → {entry.characterB}</>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-
-          {pendingTableUpdates.length === 0 && (
-            <p className="text-sm text-muted-foreground text-center py-2">
-              No pending updates
-            </p>
-          )}
-        </div>
-      </div>
+            )}
+          </div>
+        </ScrollArea>
+      </CardContent>
     </Card>
   );
 };

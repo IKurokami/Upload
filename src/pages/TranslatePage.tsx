@@ -65,7 +65,6 @@ const TranslatePage: React.FC = () => {
   // Collections of mapping/relationship tables
   const [collections, setCollections] = useState<Collection[]>([]);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>("");
-  const [newCollectionName, setNewCollectionName] = useState<string>("");
 
   // Collection management states
   const [isCollectionManagementVisible, setIsCollectionManagementVisible] =
@@ -470,8 +469,8 @@ const TranslatePage: React.FC = () => {
     saveDataToDB("translationCollections", updatedCollections);
   };
 
-  const addNewCollection = () => {
-    if (!newCollectionName.trim()) {
+  const addNewCollection = (name: string) => {
+    if (!name.trim()) {
       toast.error("Please enter a name for the new collection");
       setError("Please enter a name for the new collection");
       return;
@@ -482,7 +481,7 @@ const TranslatePage: React.FC = () => {
 
     const newCollection: Collection = {
       id: Date.now().toString(),
-      name: newCollectionName,
+      name: name,
       mappingTable: [],
       relationshipsTable: [],
       tableUpdateHistory: [],
@@ -493,10 +492,9 @@ const TranslatePage: React.FC = () => {
     setSelectedCollectionId(newCollection.id);
     setMappingTable([]);
     setRelationshipsTable([]);
-    setNewCollectionName("");
 
     saveDataToDB("translationCollections", updatedCollections);
-    toast.success(`Collection "${newCollectionName}" created`);
+    toast.success(`Collection "${name}" created`);
   };
 
   const deleteCollection = (collectionId: string) => {
@@ -624,7 +622,7 @@ const TranslatePage: React.FC = () => {
               onMappingTableUpdate: (entries: Partial<MappingEntry>[]) => {
                 console.log('Received entries mapping table:', entries);
                 try {
-                  const { newTable, updatedCount, added, updated } = processTableUpdate(
+                  const { updatedCount, added, updated } = processTableUpdate(
                     mappingTable,
                     entries,
                     validateAndProcessMappingEntry,
@@ -646,7 +644,7 @@ const TranslatePage: React.FC = () => {
                 console.log('Received entries relationships table:', entries);
 
                 try {
-                  const { newTable, updatedCount, added, updated } = processTableUpdate(
+                  const { updatedCount, added, updated } = processTableUpdate(
                     relationshipsTable,
                     entries,
                     validateAndProcessRelationshipEntry,
@@ -842,9 +840,6 @@ const TranslatePage: React.FC = () => {
     setCollections(updatedCollections);
     saveDataToDB("translationCollections", updatedCollections);
     toast.success(`Collection renamed to "${editedCollectionName}"`);
-
-    // Optionally close the settings after renaming
-    closeCollectionSettings();
   };
 
   // Toggle collection management visibility
@@ -916,10 +911,10 @@ const TranslatePage: React.FC = () => {
       setShowDeleteConfirmation(false);
       setCollectionToDelete("");
 
-      // Close the collection management section after deletion
-      setTimeout(() => {
-        setIsCollectionManagementVisible(false);
-      }, 300);
+      // Do NOT close the collection management section after deletion
+      // setTimeout(() => {
+      //   setIsCollectionManagementVisible(false);
+      // }, 300);
     } catch (error) {
       console.error("Error deleting collection:", error);
       toast.error("Failed to delete collection");
@@ -1130,8 +1125,6 @@ const TranslatePage: React.FC = () => {
           setCollectionToEdit={setCollectionToEdit}
           editedCollectionName={editedCollectionName}
           setEditedCollectionName={setEditedCollectionName}
-          newCollectionName={newCollectionName}
-          setNewCollectionName={setNewCollectionName}
           addNewCollection={addNewCollection}
           useCollection={useCollection}
           renameCollection={renameCollection}
