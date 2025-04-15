@@ -18,6 +18,7 @@ import { SavedAlbum } from "@/types/SavedAlbum";
 import { Eye, Loader2, Search, Upload } from "lucide-react";
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 interface AlbumsPageProps { }
 
@@ -47,13 +48,15 @@ const AlbumsPage: React.FC<AlbumsPageProps> = () => {
       getRequest.onerror = () => {
         console.error("Error loading albums from IndexedDB");
         setLoading(false);
-        alert("Failed to load albums.  Check the console for details.");
+        toast.error("Failed to load albums", {
+          description: "Check the console for details."
+        });
       };
     } catch (error) {
       console.error("IndexedDB error:", error);
-      alert(
-        "Failed to access albums database.  Check the console for details."
-      );
+      toast.error("Failed to access albums database", {
+        description: "Check the console for details."
+      });
       setLoading(false);
     }
   };
@@ -75,9 +78,13 @@ const AlbumsPage: React.FC<AlbumsPageProps> = () => {
   const handleOpenRenameDialog = (albumId: number) => {
     const currentAlbum = savedAlbums.find((album) => album.id === albumId);
     if (currentAlbum) {
+      // Set state before opening dialog
       setNewAlbumName(currentAlbum.albumName);
       setSelectedAlbumId(albumId);
-      setRenameDialogOpen(true);
+      // Open dialog after states are set
+      setTimeout(() => {
+        setRenameDialogOpen(true);
+      }, 0);
     }
   };
 
@@ -94,36 +101,72 @@ const AlbumsPage: React.FC<AlbumsPageProps> = () => {
       await deleteAlbumFromDB(selectedAlbumId);
       await loadSavedAlbums(); // Reload albums after deletion
       setDeleteDialogOpen(false);
+      toast.success("Album deleted successfully");
     } catch (error) {
       console.error("Error deleting album:", error);
-      alert("Failed to delete album. Please check the console for details.");
+      toast.error("Failed to delete album", {
+        description: "Please check the console for details."
+      });
       setDeleteDialogOpen(false);
     }
   };
 
-  const handleRenameAlbum = async () => {
-    if (selectedAlbumId === null || !newAlbumName.trim()) return;
+  const handleCloseRenameDialog = () => {
+    // First close the dialog
+    setRenameDialogOpen(false);
+    
+    // Then reset state on next animation frame
+    requestAnimationFrame(() => {
+      setSelectedAlbumId(null);
+      setNewAlbumName("");
+    });
+  };
 
-    const albumExists = savedAlbums.some(
-      (album) =>
-        album.albumName.toLowerCase() === newAlbumName.toLowerCase() &&
-        album.id !== selectedAlbumId
-    );
+  // Handle the rename operation
+  const handleRenameSubmit = () => {
+    // Run the rename operation on next animation frame to prevent UI blocking
+    requestAnimationFrame(async () => {
+      if (selectedAlbumId === null || !newAlbumName.trim()) {
+        handleCloseRenameDialog();
+        return;
+      }
 
-    if (albumExists) {
-      alert("Album name already exists. Please choose a different name.");
-      return;
-    }
+      const albumExists = savedAlbums.some(
+        (album) =>
+          album.albumName.toLowerCase() === newAlbumName.toLowerCase() &&
+          album.id !== selectedAlbumId
+      );
 
-    try {
-      await renameAlbumInDB(selectedAlbumId, newAlbumName);
-      await loadSavedAlbums(); // Reload albums after rename
-      setRenameDialogOpen(false);
-    } catch (error) {
-      console.error("Error renaming album:", error);
-      alert("Failed to rename album. Please check the console for details.");
-      setRenameDialogOpen(false);
-    }
+      if (albumExists) {
+        toast.error("Album name already exists", {
+          description: "Please choose a different name."
+        });
+        return;
+      }
+
+      // Store values before closing dialog
+      const albumIdToUpdate = selectedAlbumId;
+      const nameToUpdate = newAlbumName;
+      
+      // Close dialog before any async operations
+      handleCloseRenameDialog();
+      
+      try {
+        // Perform the database update
+        await renameAlbumInDB(albumIdToUpdate, nameToUpdate);
+        
+        // Reload albums
+        await loadSavedAlbums();
+        
+        // Show success message
+        toast.success(`Album renamed to "${nameToUpdate}"`);
+      } catch (error) {
+        console.error("Error renaming album:", error);
+        toast.error("Failed to rename album", {
+          description: "Please check the console for details."
+        });
+      }
+    });
   };
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -202,9 +245,9 @@ const AlbumsPage: React.FC<AlbumsPageProps> = () => {
 
       <RenameDialog
         isOpen={renameDialogOpen}
-        onClose={() => setRenameDialogOpen(false)}
+        onClose={handleCloseRenameDialog}
         albumName={newAlbumName}
-        onRename={handleRenameAlbum}
+        onRename={handleRenameSubmit}
         setAlbumName={setNewAlbumName}
       />
 

@@ -1,19 +1,29 @@
 import MainLayout from "@/layouts/MainLayout";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useMemo, memo } from "react";
 import { Loader2 } from "lucide-react";
 
-// Lazy-loaded pages
-const HomePage = lazy(() => import("../pages/HomePage"));
-const UploadPage = lazy(() => import("../pages/UploadPage"));
-const AlbumsPage = lazy(() => import("../pages/AlbumsPage"));
-const AlbumDetailPage = lazy(() => import("../pages/AlbumDetailPage"));
-const ExtractTextPage = lazy(() => import("../pages/ExtractTextPage"));
-const SettingsPage = lazy(() => import("../pages/SettingsPage"));
-const TranslatePage = lazy(() => import("../pages/TranslatePage"));
+// Lazy-loaded pages with memoization
+const HomePage = memo(lazy(() => import("../pages/HomePage")));
+const UploadPage = memo(lazy(() => import("../pages/UploadPage")));
+const AlbumsPage = memo(lazy(() => import("../pages/AlbumsPage")));
+const AlbumDetailPage = memo(lazy(() => import("../pages/AlbumDetailPage")));
+const ExtractTextPage = memo(lazy(() => import("../pages/ExtractTextPage")));
+const SettingsPage = memo(lazy(() => import("../pages/SettingsPage")));
+const TranslatePage = memo(lazy(() => import("../pages/TranslatePage")));
 
-const router = createBrowserRouter([
+// Add display names for better debugging
+HomePage.displayName = 'HomePage';
+UploadPage.displayName = 'UploadPage';
+AlbumsPage.displayName = 'AlbumsPage';
+AlbumDetailPage.displayName = 'AlbumDetailPage';
+ExtractTextPage.displayName = 'ExtractTextPage';
+SettingsPage.displayName = 'SettingsPage';
+TranslatePage.displayName = 'TranslatePage';
+
+// Memoize the router configuration
+const createAppRouter = () => createBrowserRouter([
   {
     path: "/",
     element: <MainLayout />,
@@ -33,16 +43,23 @@ const router = createBrowserRouter([
   },
 ]);
 
-export const AppRouter = () => (
-  <Suspense
-    fallback={
-      <div className="flex justify-center items-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" /> Loading...
+// Memoized loading component
+const LoadingFallback = memo(() => (
+  <div className="flex justify-center items-center h-screen">
+    <Loader2 className="h-8 w-8 animate-spin" /> Loading...
+  </div>
+));
+LoadingFallback.displayName = 'LoadingFallback';
+
+export const AppRouter = memo(() => {
+  const router = useMemo(() => createAppRouter(), []);
+
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <div className="overflow-y-scroll h-screen">
+        <RouterProvider router={router} />
       </div>
-    }
-  >
-    <div className="overflow-y-scroll h-screen">
-      <RouterProvider router={router} />
-    </div>
-  </Suspense>
-);
+    </Suspense>
+  );
+});
+AppRouter.displayName = 'AppRouter';

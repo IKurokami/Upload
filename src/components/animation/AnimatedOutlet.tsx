@@ -42,43 +42,122 @@ export default function AnimatedOutlet() {
 
   // Animation variants
   const desktopVariants = {
-    initial: (dir: number) => ({
-      x: dir > 0 ? 300 : -300,
+    initial: () => ({
+      y: -150,
+      scale: 0.1,
       opacity: 0,
+      width: "75%",
+      height: "10%",
+    }),
+    animate: {
+      y: 0,
+      scale: 1,
+      opacity: 1,
       width: "100%",
+      height: "calc(100vh - 100px)",
+      transition: {
+        type: "spring",
+        stiffness: 150,
+        damping: 40,
+        mass: 1.5,
+        duration: 3,
+      },
+    },
+    exit: {
+      y: -150,
+      scale: 0.98,
+      opacity: 1,
+      width: "100%",
+      height: "100%",
+      transition: {
+        type: "spring",
+        stiffness: 150,
+        damping: 40,
+        mass: 1.5,
+        duration: 0.1,
+      },
+    },
+  };
+
+  const settingsVariants = {
+    initial: () => ({
+      x: 1000,
+      scale: 0.5,
+      opacity: 0,
+      width: "10%",
+      height: "0%",
     }),
     animate: {
       x: 0,
+      scale: 1,
       opacity: 1,
       width: "100%",
-      transition: { type: "spring", stiffness: 300, damping: 30 },
+      height: "100%",
+      transition: {
+        type: "spring",
+        stiffness: 150,
+        damping: 40,
+        mass: 1.5,
+        duration: 3,
+      },
     },
-    exit: (dir: number) => ({
-      x: dir > 0 ? -300 : 300,
+    exit: {
+      x: -100,
+      scale: 0.98,
       opacity: 0,
       width: "100%",
-      transition: { type: "spring", stiffness: 300, damping: 30 },
-    }),
+      height: "100%",
+      transition: {
+        type: "spring",
+        stiffness: 150,
+        damping: 40,
+        mass: 1.5,
+        duration: 0.1,
+      },
+    },
   };
 
   const mobileVariants = {
     initial: {
-      x: 0,
+      y: 40,
+      scale: 0.92,
       opacity: 0,
       width: "100%",
     },
     animate: {
-      x: 0,
+      y: 0,
+      scale: 1,
       opacity: 1,
       width: "100%",
-      transition: { duration: 0.25, ease: "easeOut" },
+      transition: {
+        type: "spring",
+        stiffness: 150,
+        damping: 28,
+        mass: 1,
+        duration: 1,
+      },
     },
     exit: {
-      x: 0,
+      y: -20,
+      scale: 0.96,
       opacity: 0,
       width: "100%",
-      transition: { duration: 0.2, ease: "easeIn" },
+      transition: {
+        type: "spring",
+        stiffness: 150,
+        damping: 28,
+        mass: 1,
+        duration: 0.1,
+      },
     },
+  };
+
+  // Get variants based on current path
+  const getVariants = () => {
+    if (location.pathname === "/settings") {
+      return isMobile ? mobileVariants : settingsVariants;
+    }
+    return isMobile ? mobileVariants : desktopVariants;
   };
 
   return (
@@ -87,12 +166,13 @@ export default function AnimatedOutlet() {
         <motion.div
           key={location.pathname}
           custom={direction}
-          variants={isMobile ? mobileVariants : desktopVariants}
+          variants={getVariants()}
           initial="initial"
           animate="animate"
           style={{
             position: "absolute",
             width: "100%",
+            transformOrigin: "center center",
           }}
         >
           <Outlet />

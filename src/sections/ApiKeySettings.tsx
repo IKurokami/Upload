@@ -4,6 +4,7 @@ import { getDataFromDB, saveDataToDB } from "../lib/db";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "../components/ui/alert-dialog";
+import { toast } from "sonner";
 
 const API_KEY_NAME = "apiKey";
 
@@ -23,16 +24,6 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
   const [copied, setCopied] = useState(false);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
 
-  // Toast fallback
-  const showToast = (msg: string) => {
-    if (window && "Notification" in window && Notification.permission === "granted") {
-      new Notification(msg);
-    } else {
-      // fallback
-      alert(msg);
-    }
-  };
-
   // Sync API key from DB on mount and when changed
   useEffect(() => {
     const loadApiKey = async () => {
@@ -48,7 +39,7 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
 
   const handleSaveApiKey = async () => {
     if (!inputApiKey.trim()) {
-      showToast("Please enter a valid API key.");
+      toast.error("Please enter a valid API key.");
       return;
     }
     setLoading(true);
@@ -56,9 +47,11 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
       await saveDataToDB(API_KEY_NAME, inputApiKey.trim());
       setApiKey(inputApiKey.trim());
       setInputApiKey("");
-      showToast("API key saved successfully.");
+      toast.success("API key saved successfully.");
+
+      window.dispatchEvent(new Event("apiKeyChanged"));
     } catch (e) {
-      showToast("Failed to save API key.");
+      toast.error("Failed to save API key.");
     } finally {
       setLoading(false);
     }
@@ -69,9 +62,12 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
     try {
       await saveDataToDB(API_KEY_NAME, "");
       setApiKey(null);
-      showToast("API key removed.");
+      toast.success("API key removed.");
+
+      // Dispatch custom event to notify layout about API key removal
+      window.dispatchEvent(new Event("apiKeyChanged"));
     } catch (e) {
-      showToast("Failed to remove API key.");
+      toast.error("Failed to remove API key.");
     } finally {
       setRemoving(false);
       setShowRemoveDialog(false);
@@ -83,19 +79,20 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
       try {
         await navigator.clipboard.writeText(apiKey);
         setCopied(true);
+        toast.success("API key copied to clipboard.");
         setTimeout(() => setCopied(false), 1200);
       } catch {
-        showToast("Failed to copy API key.");
+        toast.error("Failed to copy API key.");
       }
     }
   };
 
   return (
     <div className="w-full max-w-xl mx-auto p-6">
-      <h2 className="text-xl font-semibold mb-2">API Key Settings</h2>
+      <h2 className="text-xl font-semibold mb-2">Gemini API Key</h2>
       <div className="mt-2 mb-4 text-sm text-gray-600">
         <span>
-          Enter your <b>Gemini API Key</b> to enable advanced features.{" "}
+          Enter your <b>Gemini API Key</b> to enable advanced features like OCR and Translation.{" "}
           <a
             href="https://aistudio.google.com/app/apikey"
             target="_blank"
@@ -164,7 +161,7 @@ const ApiKeySettings: React.FC<ApiKeySettingsProps> = ({
                 </AlertDialogTitle>
               </AlertDialogHeader>
               <div className="text-sm text-gray-600">
-                Are you sure you want to remove your API key? This action cannot be undone.
+                Are you sure you want to remove your API key? This will disable OCR and Translation features.
               </div>
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={removing}>Cancel</AlertDialogCancel>

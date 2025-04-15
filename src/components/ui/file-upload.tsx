@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { ImageIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 
 const mainVariant = {
@@ -42,10 +42,27 @@ export const FileUpload = ({
     const remaining = 1000 - files.length;
     if (remaining <= 0) return;
     const filesToAdd = newFiles.slice(0, remaining);
-    setFiles((prevFiles) => [...prevFiles, ...filesToAdd]);
-    onChange && onChange(filesToAdd);
+    
+    // Only display files temporarily before passing them to parent
+    setFiles(filesToAdd);
+    
+    // Pass files to parent component
+    if (onChange) {
+      onChange(filesToAdd);
+      
+      // Clear files after a short delay to allow for animation
+      setTimeout(() => {
+        setFiles([]);
+      }, 1000);
+    }
   };
 
+  // Clear the input after files are handled
+  useEffect(() => {
+    if (files.length === 0 && fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }, [files]);
 
   const { getRootProps, isDragActive } = useDropzone({
     multiple: true,

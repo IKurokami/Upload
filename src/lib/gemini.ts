@@ -6,7 +6,9 @@ import {
   HarmCategory,
   SafetySetting,
   Part,
+  SchemaType
 } from "@google/generative-ai";
+
 import { Buffer } from "buffer";
 
 // Add Buffer to window if in browser environment
@@ -20,7 +22,8 @@ if (typeof window !== "undefined" && !window.Buffer) {
 export const processMultipleWithGemini = async (
   files: File[],
   apiKey: string,
-  options: GeminiOptions
+  options: GeminiOptions,
+  tableUpdateCallbacks?: TableUpdateCallback
 ): Promise<GeminiResponse> => {
   try {
     // Dynamically import required modules
@@ -124,8 +127,8 @@ export const processMultipleWithGemini = async (
         responseMimeType: options.responseMimeType || "text/plain",
       },
     });
-
-    return processResponse(result.response);
+    console.log('Result:', result);
+    return processResponse(result.response, tableUpdateCallbacks);
   } catch (error: any) {
     console.error("Gemini Error:", error);
     return {
@@ -149,38 +152,142 @@ export const processWithGemini = async (
   return processMultipleWithGemini([file], apiKey, options);
 };
 
+// Add type for function call handlers
+type TableUpdateCallback = {
+  onMappingTableUpdate?: (entries: any[]) => void;
+  onRelationshipsTableUpdate?: (entries: any[]) => void;
+};
+
+// Update GeminiResponse interface to include needsMoreInfo
+interface ExtendedGeminiResponse {
+  thinking: string;
+  ocrText?: string;
+  imageData?: string;
+  hasError: boolean;
+  needsMoreInfo?: boolean;
+  contextAnalysis?: string;
+  translation?: string;
+}
+
+// Define function types for Gemini
+const GEMINI_FUNCTIONS = {
+  functionDeclarations: [
+    {
+      name: "setMappingTable",
+      description: "Set or update the mapping table with new entries",
+      parameters: {
+        type: SchemaType.OBJECT,
+        properties: {
+          entries: {
+            type: SchemaType.ARRAY,
+            description: "Array of mapping table entries",
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                term: { type: SchemaType.STRING, description: "Original term or name" },
+                transcription: { type: SchemaType.STRING, description: "Transcribed/translated term" },
+                type: { type: SchemaType.STRING, description: "Type (Person/Place/Other)" },
+                gender: { type: SchemaType.STRING, description: "Gender if person" },
+                notes: { type: SchemaType.STRING, description: "Additional notes" }
+              },
+              required: ["term", "transcription"]
+            }
+          }
+        },
+        required: ["entries"]
+      }
+    },
+    {
+      name: "setRelationshipsTable",
+      description: "Set or update the relationships table with new entries",
+      parameters: {
+        type: SchemaType.OBJECT,
+        properties: {
+          entries: {
+            type: SchemaType.ARRAY,
+            description: "Array of relationship table entries",
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                characterA: { type: SchemaType.STRING, description: "First character" },
+                characterB: { type: SchemaType.STRING, description: "Second character" },
+                relationship: { type: SchemaType.STRING, description: "Relationship between characters" },
+                addressTermsAToB: { type: SchemaType.STRING, description: "How A addresses B" },
+                addressTermsBToA: { type: SchemaType.STRING, description: "How B addresses A" },
+                notes: { type: SchemaType.STRING, description: "Additional notes" }
+              },
+              required: ["characterA", "characterB", "relationship"]
+            }
+          }
+        },
+        required: ["entries"]
+      }
+    }
+  ]
+};
+
 /**
  * Helper function to process response from Gemini
  */
-function processResponse(response: any): GeminiResponse {
-  if (
-    response.candidates &&
-    response.candidates.length > 0 &&
-    response.candidates[0].content.parts[0]?.inlineData
-  ) {
-    // Image response
-    const inlineData = response.candidates[0].content.parts[0].inlineData;
-    const imageData = `data:${inlineData.mimeType};base64,${inlineData.data}`;
+function processResponse(
+  response: any,
+  tableUpdateCallbacks?: TableUpdateCallback
+): ExtendedGeminiResponse {
+  console.log('Processing Gemini response:', response);
+
+  // Handle structured response
+  if (!response.candidates || response.candidates.length === 0) {
+    console.log('No candidates found in response');
     return {
-      thinking: "Image processed successfully.",
-      hasError: false,
-      imageData,
-    };
-  } else if (response.text && response.text()) {
-    // Text response
-    return {
-      thinking: "Text processed successfully.",
-      ocrText: response.text(),
-      hasError: false,
-    };
-  } else {
-    // No valid response
-    return {
-      thinking: "No output generated.",
-      ocrText: "No output generated.",
+      thinking: "No response generated.",
+      ocrText: "No response generated.",
       hasError: true,
     };
   }
+
+  const candidate = response.candidates[0];
+  console.log('Processing candidate:', candidate);
+  let translation = "";
+
+  // Process all parts of the response
+  for (const part of candidate.content.parts) {
+    console.log('Processing response part:', part);
+    // Check for function calls in the response
+    if (part.functionCall) {
+      const functionCall = part.functionCall;
+      console.log('Found function call:', functionCall.name, functionCall.args);
+      switch (functionCall.name) {
+        case "setMappingTable":
+          if (tableUpdateCallbacks?.onMappingTableUpdate) {
+            console.log('Updating mapping table with entries:', functionCall.args.entries);
+            tableUpdateCallbacks.onMappingTableUpdate(functionCall.args.entries);
+          }
+          break;
+        case "setRelationshipsTable":
+          if (tableUpdateCallbacks?.onRelationshipsTableUpdate) {
+            console.log('Updating relationships table with entries:', functionCall.args.entries);
+            tableUpdateCallbacks.onRelationshipsTableUpdate(functionCall.args.entries);
+          }
+          break;
+      }
+      continue;
+    }
+
+    // Handle text content
+    if (part.text) {
+      console.log('Adding text content:', part.text);
+      translation += part.text;
+    }
+  }
+
+  const result = {
+    thinking: "Response processed successfully.",
+    ocrText: translation,
+    hasError: false,
+    translation
+  };
+  console.log('Final processed result:', result);
+  return result;
 }
 
 /**
@@ -292,19 +399,26 @@ export const runGeminiTranslation = async (
   mappingTable: string,
   relationshipsTable: string,
   apiKey: string,
-  modelName: string
-): Promise<GeminiResponse> => {
+  modelName: string,
+  tableUpdateCallbacks?: TableUpdateCallback
+): Promise<ExtendedGeminiResponse> => {
   const systemInstruction = `
 You are a skilled translator that uses the provided mapping table and relationships table to guide your translations.
 The mapping table provides specific terms and their translations.
 The relationships table describes how characters relate to each other and how they address one another.
 Ensure your translation maintains the nuances of these relationships and uses the correct terms from the mapping table.
+
+You can use the following functions to update the mapping and relationships tables:
+1. setMappingTable - Use this to add or update entries in the mapping table when you discover new terms
+2. setRelationshipsTable - Use this to add or update relationship entries when you discover new character relationships
+
+Always maintain consistency with existing entries and only add new entries when you're confident about the information.
 `;
 
   const prompt = `
-# TRANSLATE: Mandarin to Vietnamese with Professional Accuracy
+# TRANSLATE: Original Language to Vietnamese with Professional Accuracy
 
-Translate Mandarin text into Vietnamese with complete accuracy and cultural nuance by following these comprehensive guidelines:
+Translate the original language text into Vietnamese with complete accuracy and cultural nuance by following these comprehensive guidelines:
 
 ---
 
@@ -368,19 +482,12 @@ Translate Mandarin text into Vietnamese with complete accuracy and cultural nuan
 
 ---
 
-## 🔹 AFTER TRANSLATION – PROVIDE COMPLETE TERMINOLOGY MAPPING TABLES:
+## Current Tables:
 
 1. **TERM MAPPING TABLE**:
-   After each translation section, include a table listing:
-
 ${mappingTable || "No mapping table provided."}
 
-   - First include **new proper nouns or terms** introduced in the section
-   - Then provide the **COMPLETE UPDATED MAPPING** including all terms from previous sections
-
 2. **RELATIONSHIPS & ADDRESS TERMS TABLE**:
-   After each translation section, also include a detailed relationships table:
-
 ${relationshipsTable || "No relationships table provided."}
 
 TEXT TO TRANSLATE:
@@ -388,7 +495,7 @@ ${text}
 
 ---
 
-## 🔹 BEFORE TRANSLATION – REQUIRE THE FOLLOWING CONTEXT:
+## 🔹 BEFORE TRANSLATION – TRY TO DEFINE THE CONTEXT:
 
 Before beginning the translation:
 
@@ -423,174 +530,12 @@ Before beginning the translation:
     },
     chatText: prompt,
     responseMimeType: "text/plain",
+    tools: [GEMINI_FUNCTIONS]
   };
 
-  return processMultipleWithGemini([], apiKey, options);
+  const result = await processMultipleWithGemini([], apiKey, options, tableUpdateCallbacks);
+  return result;
 };
-
-// /**
-//  * Function to get mapping table with tool calling support
-//  */
-// export const getMappingTable = async (
-//   apiKey: string,
-//   modelName: string
-// ): Promise<string> => {
-//   const { GoogleGenerativeAI } = await import("@google/generative-ai");
-//   const genAI = new GoogleGenerativeAI(apiKey);
-
-//   const model = genAI.getGenerativeModel({
-//     model: modelName,
-//     tools: [{
-//       functionDeclarations: [
-//         {
-//           name: "get_mapping_table",
-//           description: "Get the current mapping table",
-//           parameters: {
-//             type: "object",
-//             properties: {},
-//             required: [],
-//           },
-//         } as any,
-//       ],
-//     }],
-//   }, {});
-
-//   try {
-//     // This is a stub function - in a real implementation, you would retrieve
-//     // the mapping table from your database or storage
-//     // For now, we'll just return a sample mapping table
-//     return "| Term / Name | Transcription | Type (Person/Place/Other) | Gender (if person) | Notes |\n|:----------- |:------------- |:------------------------- |:------------------ |:------ |";
-//   } catch (error) {
-//     console.error("Error getting mapping table:", error);
-//     throw error;
-//   }
-// };
-
-// /**
-//  * Function to get relationships table with tool calling support
-//  */
-// export const getRelationshipsTable = async (
-//   apiKey: string,
-//   modelName: string
-// ): Promise<string> => {
-//   const { GoogleGenerativeAI } = await import("@google/generative-ai");
-//   const genAI = new GoogleGenerativeAI(apiKey);
-
-//   const model = genAI.getGenerativeModel({
-//     model: modelName,
-//     tools: [{
-//       functionDeclarations: [
-//         {
-//           name: "get_relationships_table",
-//           description: "Get the current relationships table",
-//           parameters: {
-//             type: "object",
-//             properties: {},
-//             required: [],
-//           },
-//         } as any,
-//       ],
-//     }],
-//   }, {});
-
-//   try {
-//     // This is a stub function - in a real implementation, you would retrieve
-//     // the relationships table from your database or storage
-//     // For now, we'll just return a sample relationships table
-//     return "| Character A | Character B | Relationship | Address Terms (A→B) | Address Terms (B→A) | Notes |\n|:----------- |:----------- |:------------ |:------------------- |:------------------- |:----- |";
-//   } catch (error) {
-//     console.error("Error getting relationships table:", error);
-//     throw error;
-//   }
-// };
-
-// /**
-//  * Function to set mapping table with tool calling support
-//  */
-// export const setMappingTable = async (
-//   mappingTable: string,
-//   apiKey: string,
-//   modelName: string
-// ): Promise<boolean> => {
-//   const { GoogleGenerativeAI } = await import("@google/generative-ai");
-//   const genAI = new GoogleGenerativeAI(apiKey);
-
-//   const model = genAI.getGenerativeModel({
-//     model: modelName,
-//     tools: [{
-//       functionDeclarations: [
-//         {
-//           name: "set_mapping_table",
-//           description: "Set the mapping table",
-//           parameters: {
-//             type: "object",
-//             properties: {
-//               mapping_table: {
-//                 type: "string",
-//                 description: "The mapping table in markdown format",
-//               },
-//             },
-//             required: ["mapping_table"],
-//           },
-//         } as any,
-//       ],
-//     }],
-//   }, {});
-
-//   try {
-//     // This is a stub function - in a real implementation, you would save
-//     // the mapping table to your database or storage
-//     // For now, we'll just return success
-//     return true;
-//   } catch (error) {
-//     console.error("Error setting mapping table:", error);
-//     throw error;
-//   }
-// };
-
-// /**
-//  * Function to set relationships table with tool calling support
-//  */
-// export const setRelationshipsTable = async (
-//   relationshipsTable: string,
-//   apiKey: string,
-//   modelName: string
-// ): Promise<boolean> => {
-//   const { GoogleGenerativeAI } = await import("@google/generative-ai");
-//   const genAI = new GoogleGenerativeAI(apiKey);
-
-//   const model = genAI.getGenerativeModel({
-//     model: modelName,
-//     tools: [{
-//       functionDeclarations: [
-//         {
-//           name: "set_relationships_table",
-//           description: "Set the relationships table",
-//           parameters: {
-//             type: "object",
-//             properties: {
-//               relationships_table: {
-//                 type: "string",
-//                 description: "The relationships table in markdown format",
-//               },
-//             },
-//             required: ["relationships_table"],
-//           },
-//         } as any,
-//       ],
-//     }],
-//   }, {});
-
-//   try {
-//     // This is a stub function - in a real implementation, you would save
-//     // the relationships table to your database or storage
-//     // For now, we'll just return success
-//     return true;
-//   } catch (error) {
-//     console.error("Error setting relationships table:", error);
-//     throw error;
-//   }
-// };
 
 // For backward compatibility
 export const runGemini = async (

@@ -301,7 +301,7 @@ export const renameAlbumInDB = async (
     // Update the album name
     albumToUpdate.albumName = newName;
 
-    // Save the updated album
+    // Save the updated album using a simpler promise approach
     return new Promise((resolve, reject) => {
       const putRequest = store.put(albumToUpdate);
       putRequest.onsuccess = () => resolve();

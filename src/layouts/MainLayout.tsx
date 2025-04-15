@@ -13,12 +13,49 @@ import {
 import { Menu, FileUp, Album, ScrollText, Settings, Languages } from "lucide-react";
 import { ArcrylicBgProvider } from "@/contexts/ArcrylicBgContext";
 import { Toaster } from "sonner";
+import { getDataFromDB } from "@/lib/db";
+import { AnimatePresence, motion } from "framer-motion";
 
 const MainLayout = () => {
   const location = useLocation();
 
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [apiKey, setApiKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadApiKey = async () => {
+      try {
+        const storedKey = await getDataFromDB<string>("apiKey");
+        setApiKey(storedKey || null);
+      } catch (e) {
+        // ignore
+      }
+    };
+    loadApiKey();
+    
+    // Add event listener to detect changes in API key
+    const handleStorageChange = async (event: StorageEvent) => {
+      if (event.key === "apiKey" || event.key === null) {
+        const updatedKey = await getDataFromDB<string>("apiKey");
+        setApiKey(updatedKey || null);
+      }
+    };
+    
+    // Setup custom event listener for API key changes
+    const handleCustomStorageChange = async () => {
+      const updatedKey = await getDataFromDB<string>("apiKey");
+      setApiKey(updatedKey || null);
+    };
+    
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("apiKeyChanged", handleCustomStorageChange);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("apiKeyChanged", handleCustomStorageChange);
+    };
+  }, []);
 
   useEffect(() => {
     setIsLoading(true);
@@ -70,6 +107,13 @@ const MainLayout = () => {
     };
   }, []);
 
+  // Animation variants
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
+    exit: { opacity: 0, x: 20, transition: { duration: 0.2 } }
+  };
+
   return (
     <ArcrylicBgProvider value={arcrylicBg}>
       <div
@@ -92,42 +136,83 @@ const MainLayout = () => {
 
             {/* Desktop navigation */}
             <div className="hidden md:flex items-center gap-1">
-              <Link to="/Upload">
-                <Button
-                  variant={isActive("/Upload") ? "default" : "ghost"}
-                  className="flex items-center gap-2 w-32 justify-start"
-                >
-                  <FileUp size={18} />
-                  <span>Upload</span>
-                </Button>
-              </Link>
-              <Link to="/albums">
-                <Button
-                  variant={isActive("/albums") ? "default" : "ghost"}
-                  className="flex items-center gap-2 w-32 justify-start"
-                >
-                  <Album size={18} />
-                  <span>Albums</span>
-                </Button>
-              </Link>
-              <Link to="/ocr">
-                <Button
-                  variant={isActive("/ocr") ? "default" : "ghost"}
-                  className="flex items-center gap-2 w-32 justify-start"
-                >
-                  <ScrollText size={18} />
-                  <span>OCR</span>
-                </Button>
-              </Link>
-              <Link to="/translate">
-                <Button
-                  variant={isActive("/translate") ? "default" : "ghost"}
-                  className="flex items-center gap-2 w-32 justify-start"
-                >
-                  <Languages size={18} />
-                  <span>Translate</span>
-                </Button>
-              </Link>
+              <motion.div
+                key="upload-btn"
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                variants={itemVariants}
+              >
+                <Link to="/Upload">
+                  <Button
+                    variant={isActive("/Upload") ? "default" : "ghost"}
+                    className="flex items-center gap-2 w-32 justify-start"
+                  >
+                    <FileUp size={18} />
+                    <span>Upload</span>
+                  </Button>
+                </Link>
+              </motion.div>
+              
+              <motion.div
+                key="albums-btn"
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                variants={itemVariants}
+              >
+                <Link to="/albums">
+                  <Button
+                    variant={isActive("/albums") ? "default" : "ghost"}
+                    className="flex items-center gap-2 w-32 justify-start"
+                  >
+                    <Album size={18} />
+                    <span>Albums</span>
+                  </Button>
+                </Link>
+              </motion.div>
+              
+              <AnimatePresence>
+                {apiKey && (
+                  <>
+                    <motion.div
+                      key="ocr-btn"
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      variants={itemVariants}
+                    >
+                      <Link to="/ocr">
+                        <Button
+                          variant={isActive("/ocr") ? "default" : "ghost"}
+                          className="flex items-center gap-2 w-32 justify-start"
+                        >
+                          <ScrollText size={18} />
+                          <span>OCR</span>
+                        </Button>
+                      </Link>
+                    </motion.div>
+                    
+                    <motion.div
+                      key="translate-btn"
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      variants={itemVariants}
+                    >
+                      <Link to="/translate">
+                        <Button
+                          variant={isActive("/translate") ? "default" : "ghost"}
+                          className="flex items-center gap-2 w-32 justify-start"
+                        >
+                          <Languages size={18} />
+                          <span>Translate</span>
+                        </Button>
+                      </Link>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Mobile navigation */}
@@ -157,25 +242,31 @@ const MainLayout = () => {
                       <span>Albums</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to="/ocr" className="flex items-center gap-2 w-full">
-                      <ScrollText size={18} />
-                      <span>OCR</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Link to="/translate" className="flex items-center gap-2 w-full">
-                      <Languages size={18} />
-                      <span>Translate</span>
-                    </Link>
-                  </DropdownMenuItem>
+                  
+                  {apiKey && (
+                    <>
+                      <DropdownMenuItem>
+                        <Link to="/ocr" className="flex items-center gap-2 w-full">
+                          <ScrollText size={18} />
+                          <span>OCR</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Link to="/translate" className="flex items-center gap-2 w-full">
+                          <Languages size={18} />
+                          <span>Translate</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  
                   <DropdownMenuItem>
                     <Link
                       to="/settings"
                       className="flex items-center gap-2 w-full"
                     >
                       <Settings size={18} />
-                      <span>Settings</span>
+                      <span>{apiKey ? "Gemini" : "Settings"}</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
@@ -195,7 +286,15 @@ const MainLayout = () => {
                   className="flex items-center gap-2 w-32 justify-start"
                 >
                   <Settings size={18} />
-                  <span>Settings</span>
+                  <motion.span
+                    key={apiKey ? "gemini-text" : "settings-text"}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {apiKey ? "Gemini" : "Settings"}
+                  </motion.span>
                 </Button>
               </Link>
             </div>

@@ -10,6 +10,7 @@ import {
   AlertCircle,
   ArrowUpDown,
   Eye,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ImageModal from "@/sections/ImageModal";
@@ -25,6 +26,17 @@ import { useId } from "react";
 import { useLongPress } from "@/hooks/useLongPress";
 import { LongPressOverlay } from "@/components/common/LongPressOverlay";
 import type { Action } from "@/components/common/LongPressOverlay";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ImagesTabProps {
   images: ImageData[];
@@ -32,6 +44,7 @@ interface ImagesTabProps {
   copiedAll: boolean;
   copyAllToClipboard: () => void;
   handleDelete: (id: string) => void;
+  handleDeleteAll?: () => void;
 }
 
 interface PositionData {
@@ -49,6 +62,7 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
   copiedAll,
   copyAllToClipboard,
   handleDelete,
+  handleDeleteAll = () => {},
 }) => {
   const [activeImage, setActiveImage] = useState<ImageData | null>(null);
   const [copied, setCopied] = useState(false);
@@ -57,6 +71,9 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
   const [overlayOpen, setOverlayOpen] = useState(false);
   const [overlayRect, setOverlayRect] = useState<DOMRect | null>(null);
   const [overlayImage, setOverlayImage] = useState<ImageData | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState<string | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const id = useId();
 
@@ -87,7 +104,10 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
     if (activeImage && activeImage.geminiResponse.ocrText) {
       navigator.clipboard.writeText(activeImage.geminiResponse.ocrText);
       setCopied(true);
+      toast.success(`Copied text from ${activeImage.file.name}`);
       setTimeout(() => setCopied(false), 2000);
+    } else {
+      toast.error("No text available to copy");
     }
   };
 
@@ -127,7 +147,7 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
     actions.push({
       label: "Remove",
       icon: <X className="w-4 h-4" />,
-      onClick: () => handleDelete(img.id),
+      onClick: () => confirmDelete(img.id),
       destructive: true,
     });
     return actions;
@@ -171,6 +191,28 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
     }
   }, [images, sortBy]);
 
+  const confirmDelete = (id: string) => {
+    setImageToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteAll = () => {
+    setDeleteAllDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (imageToDelete) {
+      handleDelete(imageToDelete);
+      setImageToDelete(null);
+    }
+    setDeleteDialogOpen(false);
+  };
+
+  const handleConfirmDeleteAll = () => {
+    handleDeleteAll();
+    setDeleteAllDialogOpen(false);
+  };
+
   if (images.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] text-muted-foreground">
@@ -209,29 +251,40 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
               </SelectContent>
             </Select>
 
-            {images.some((img) => !img.isProcessing && !img.hasError) && (
+            <div className="flex items-center gap-1.5 w-full xs:w-auto">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={copyAllToClipboard}
+                disabled={!images.some((img) => !img.isProcessing && !img.hasError)}
                 className={cn(
-                  "flex items-center gap-1 h-8 text-xs transition-all duration-200 w-full xs:w-auto",
+                  "flex items-center gap-1 h-7 text-xs transition-all duration-200 px-2 flex-1 xs:flex-initial",
                   copiedAll && "bg-primary text-primary-foreground"
                 )}
               >
                 {copiedAll ? (
                   <>
-                    <Check className="h-3.5 w-3.5" />
-                    Copied All
+                    <Check className="h-3 w-3" />
+                    <span className="hidden xs:inline">Copied</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="h-3.5 w-3.5" />
-                    Copy All Text
+                    <Copy className="h-3 w-3" />
+                    <span className="hidden xs:inline">Copy All</span>
                   </>
                 )}
               </Button>
-            )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={confirmDeleteAll}
+                className="flex items-center gap-1 h-7 text-xs text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors px-2 flex-1 xs:flex-initial"
+              >
+                <Trash2 className="h-3 w-3" />
+                <span className="hidden xs:inline">Remove All</span>
+              </Button>
+            </div>
           </div>
         </div>
         <ScrollArea className="flex-1">
@@ -244,7 +297,7 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
                 id={id}
                 handleImageClick={handleImageClick}
                 handleRetry={handleRetry}
-                handleDelete={handleDelete}
+                handleDelete={confirmDelete}
                 handleLongPress={handleLongPress}
                 cardRefs={cardRefs}
               />
@@ -252,6 +305,42 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
           </div>
         </ScrollArea>
       </div>
+
+      {/* Confirmation Dialog for Delete */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this image? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmation Dialog for Delete All */}
+      <AlertDialog open={deleteAllDialogOpen} onOpenChange={setDeleteAllDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete All Images</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete all {images.length} images? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDeleteAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Long Press Overlay */}
       {overlayOpen && overlayImage && (

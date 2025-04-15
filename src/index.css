@@ -7,17 +7,15 @@
 @custom-variant dark (&:is(.dark *));
 
 .rainbow-bar {
-  background: linear-gradient(
-    90deg,
-    red,
-    orange,
-    yellow,
-    green,
-    blue,
-    indigo,
-    violet,
-    red
-  );
+  background: linear-gradient(90deg,
+      red,
+      orange,
+      yellow,
+      green,
+      blue,
+      indigo,
+      violet,
+      red);
   background-size: 200% 100%;
   animation: rainbow-move 1s ease-out infinite;
 }
@@ -245,17 +243,17 @@
   pointer-events: none;
 }
 
-.app-blur-bg > * {
+.app-blur-bg>* {
   position: relative;
   z-index: 1;
 }
 
 .arcrylic-blur {
-  background: rgb(0, 0, 0) !important;
-  backdrop-filter: blur(10px) saturate(180%);
-  -webkit-backdrop-filter: blur(10px) saturate(180%);
-  border: 1px solid rgba(104, 104, 104, 0.18);
-  box-shadow: 0 2px 16px 0 rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.507) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgb(63, 63, 63);
+  box-shadow: 0 1px 10px 0 rgba(238, 238, 238, 0.068);
 }
 
 [data-registry="plate"] {

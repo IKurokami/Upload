@@ -402,8 +402,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 )}
               >
                 {message.role === "user" &&
-                  !message.isProcessing &&
-                  !message.isEditing ? (
+                !message.isProcessing &&
+                !message.isEditing ? (
                   <ContextMenu>
                     <ContextMenuTrigger asChild>
                       <div>
@@ -463,10 +463,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                       // Notify parent with original content to ensure consistency
                                       const orig =
                                         typeof message.originalContent ===
-                                          "string"
+                                        "string"
                                           ? message.originalContent
                                           : (message.originalContent as any)
-                                            ?.content || "";
+                                              ?.content || "";
                                       const fallback =
                                         typeof message.content === "string"
                                           ? message.content
@@ -504,42 +504,42 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
                               {/* Display images for user messages */}
                               {(message.imageDataUrls &&
-                                message.imageDataUrls.length > 0
+                              message.imageDataUrls.length > 0
                                 ? message.imageDataUrls
                                 : typeof message.content === "object" &&
-                                message.content?.imageBase64s) && (
-                                  <div className="mt-2 flex flex-wrap gap-2 max-w-full overflow-hidden">
-                                    {(message.imageDataUrls &&
-                                      message.imageDataUrls.length > 0
-                                      ? message.imageDataUrls
-                                      : (typeof message.content === "object" &&
+                                  message.content?.imageBase64s) && (
+                                <div className="mt-2 flex flex-wrap gap-2 max-w-full overflow-hidden">
+                                  {(message.imageDataUrls &&
+                                  message.imageDataUrls.length > 0
+                                    ? message.imageDataUrls
+                                    : (typeof message.content === "object" &&
                                         message.content?.imageBase64s) ||
                                       []
-                                    ).map((url: string, imgIndex: number) => (
-                                      <div
-                                        key={imgIndex}
-                                        className="relative animate-in zoom-in-95 duration-200 max-w-[calc(100%-8px)]"
+                                  ).map((url: string, imgIndex: number) => (
+                                    <div
+                                      key={imgIndex}
+                                      className="relative animate-in zoom-in-95 duration-200 max-w-[calc(100%-8px)]"
+                                      style={{
+                                        animationDelay: `${imgIndex * 100}ms`,
+                                      }}
+                                    >
+                                      <img
+                                        src={url}
+                                        alt={`Uploaded ${imgIndex}`}
+                                        className="max-w-full max-h-[150px] rounded-md object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                        onClick={() => setExpandedImage(url)}
                                         style={{
-                                          animationDelay: `${imgIndex * 100}ms`,
+                                          objectFit: "cover",
+                                          aspectRatio: "4/3",
                                         }}
-                                      >
-                                        <img
-                                          src={url}
-                                          alt={`Uploaded ${imgIndex}`}
-                                          className="max-w-full max-h-[150px] rounded-md object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                          onClick={() => setExpandedImage(url)}
-                                          style={{
-                                            objectFit: "cover",
-                                            aspectRatio: "4/3",
-                                          }}
-                                        />
-                                        <div className="absolute top-1 right-1 bg-black/50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                          <ZoomIn className="h-3 w-3 text-white" />
-                                        </div>
+                                      />
+                                      <div className="absolute top-1 right-1 bg-black/50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <ZoomIn className="h-3 w-3 text-white" />
                                       </div>
-                                    ))}
-                                  </div>
-                                )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
 
                               {/* Loading indicator for processing */}
                               {message.isProcessing && (
@@ -585,10 +585,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                               // Process images if present
                               const imageUrls =
                                 message.imageDataUrls &&
-                                  message.imageDataUrls.length > 0
+                                message.imageDataUrls.length > 0
                                   ? message.imageDataUrls
                                   : typeof message.content === "object" &&
-                                  message.content?.imageBase64s;
+                                    message.content?.imageBase64s;
 
                               if (imageUrls && imageUrls.length > 0) {
                                 try {
@@ -644,11 +644,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                               // Fix: Check for imageDataUrls first, which is where images are stored in the message
                               const imageUrls =
                                 message.imageDataUrls &&
-                                  message.imageDataUrls.length > 0
+                                message.imageDataUrls.length > 0
                                   ? message.imageDataUrls
                                   : extMessage.imageBase64s ||
-                                  (typeof message.content === "object" &&
-                                    message.content?.imageBase64s);
+                                    (typeof message.content === "object" &&
+                                      message.content?.imageBase64s);
                               const textContent =
                                 typeof message.content === "string"
                                   ? message.content
@@ -722,10 +722,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                           // Process images if present
                           const imageUrls =
                             message.imageDataUrls &&
-                              message.imageDataUrls.length > 0
+                            message.imageDataUrls.length > 0
                               ? message.imageDataUrls
                               : typeof message.content === "object" &&
-                              message.content?.imageBase64s;
+                                message.content?.imageBase64s;
 
                           if (imageUrls && imageUrls.length > 0) {
                             try {
@@ -775,11 +775,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                           // Fix: Check for imageDataUrls first, which is where images are stored in the message
                           const imageUrls =
                             message.imageDataUrls &&
-                              message.imageDataUrls.length > 0
+                            message.imageDataUrls.length > 0
                               ? message.imageDataUrls
                               : extMessage.imageBase64s ||
-                              (typeof message.content === "object" &&
-                                message.content?.imageBase64s);
+                                (typeof message.content === "object" &&
+                                  message.content?.imageBase64s);
                           const textContent =
                             typeof message.content === "string"
                               ? message.content
@@ -884,7 +884,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                   typeof message.originalContent === "string"
                                     ? message.originalContent
                                     : (message.originalContent as any)
-                                      ?.content || "";
+                                        ?.content || "";
                                 const fallback =
                                   typeof message.content === "string"
                                     ? message.content
@@ -919,42 +919,42 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
                         {/* Display images for user messages */}
                         {(message.imageDataUrls &&
-                          message.imageDataUrls.length > 0
+                        message.imageDataUrls.length > 0
                           ? message.imageDataUrls
                           : typeof message.content === "object" &&
-                          message.content?.imageBase64s) && (
-                            <div className="mt-2 flex flex-wrap gap-2 max-w-full overflow-hidden">
-                              {(message.imageDataUrls &&
-                                message.imageDataUrls.length > 0
-                                ? message.imageDataUrls
-                                : (typeof message.content === "object" &&
+                            message.content?.imageBase64s) && (
+                          <div className="mt-2 flex flex-wrap gap-2 max-w-full overflow-hidden">
+                            {(message.imageDataUrls &&
+                            message.imageDataUrls.length > 0
+                              ? message.imageDataUrls
+                              : (typeof message.content === "object" &&
                                   message.content?.imageBase64s) ||
                                 []
-                              ).map((url: string, imgIndex: number) => (
-                                <div
-                                  key={imgIndex}
-                                  className="relative animate-in zoom-in-95 duration-200 max-w-[calc(100%-8px)]"
+                            ).map((url: string, imgIndex: number) => (
+                              <div
+                                key={imgIndex}
+                                className="relative animate-in zoom-in-95 duration-200 max-w-[calc(100%-8px)]"
+                                style={{
+                                  animationDelay: `${imgIndex * 100}ms`,
+                                }}
+                              >
+                                <img
+                                  src={url}
+                                  alt={`Uploaded ${imgIndex}`}
+                                  className="max-w-full max-h-[150px] rounded-md object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                  onClick={() => setExpandedImage(url)}
                                   style={{
-                                    animationDelay: `${imgIndex * 100}ms`,
+                                    objectFit: "cover",
+                                    aspectRatio: "4/3",
                                   }}
-                                >
-                                  <img
-                                    src={url}
-                                    alt={`Uploaded ${imgIndex}`}
-                                    className="max-w-full max-h-[150px] rounded-md object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                    onClick={() => setExpandedImage(url)}
-                                    style={{
-                                      objectFit: "cover",
-                                      aspectRatio: "4/3",
-                                    }}
-                                  />
-                                  <div className="absolute top-1 right-1 bg-black/50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <ZoomIn className="h-3 w-3 text-white" />
-                                  </div>
+                                />
+                                <div className="absolute top-1 right-1 bg-black/50 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <ZoomIn className="h-3 w-3 text-white" />
                                 </div>
-                              ))}
-                            </div>
-                          )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
 
                         {/* Loading indicator for processing */}
                         {message.isProcessing && (
@@ -1145,7 +1145,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     <SelectItem value="gemini-2.0-flash-exp-image-generation">
                       2.0 Flash
                     </SelectItem>
-                    <SelectItem value="gemini-2.5-pro-preview-03-25">
+                    <SelectItem value="gemini-2.5-pro-exp-03-25">
                       2.5 Pro
                     </SelectItem>
                   </SelectContent>
@@ -1193,8 +1193,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               cursor: isDragging
                 ? "grabbing"
                 : zoomLevel > 1
-                  ? "grab"
-                  : "default",
+                ? "grab"
+                : "default",
             }}
           >
             {expandedImage && (
@@ -1332,7 +1332,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 value={expandedInputValue === undefined ? "raw" : undefined}
                 defaultValue="raw"
                 className="flex-1 flex flex-col min-h-0 overflow-hidden"
-                onValueChange={() => { }}
+                onValueChange={() => {}}
               >
                 <TabsList className="mb-2">
                   <TabsTrigger value="raw">Raw</TabsTrigger>
@@ -1356,7 +1356,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     autoFocus
                   />
                 </TabsContent>
-                <TabsContent value="markdown" className="flex-1 min-h-0 overflow-hidden">
+                <TabsContent
+                  value="markdown"
+                  className="flex-1 min-h-0 overflow-hidden"
+                >
                   <React.Suspense
                     fallback={
                       <div className="flex items-center justify-center h-full">
@@ -1417,7 +1420,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     <SelectItem value="gemini-2.0-flash-exp-image-generation">
                       2.0 Flash
                     </SelectItem>
-                    <SelectItem value="gemini-2.5-pro-preview-03-25">
+                    <SelectItem value="gemini-2.5-pro-exp-03-25">
                       2.5 Pro
                     </SelectItem>
                   </SelectContent>

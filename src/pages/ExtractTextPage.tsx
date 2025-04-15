@@ -24,14 +24,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { toast } from "sonner";
 
 const API_KEY_NAME = "apiKey";
 const SYSTEM_PROMPT_NAME = "systemPrompt";
@@ -60,7 +59,6 @@ const ExtractTextPage: React.FC = () => {
   const [rpm, setRpm] = useState<number>(10);
   const [systemPrompt, setSystemPrompt] = useState<string>("");
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [inputApiKey, setInputApiKey] = useState<string>("");
 
   // Control concurrent processing
   const [maxConcurrentRequests, setMaxConcurrentRequests] = useState<number>(3);
@@ -196,29 +194,14 @@ const ExtractTextPage: React.FC = () => {
   };
 
   // Handle RPM change
-  const handleRpmChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newRpm = parseInt(e.target.value);
-    if (newRpm > 0) {
-      setRpm(newRpm);
-      await saveDataToDB("rpm", newRpm);
-    }
-  };
 
   // Handle concurrent requests change
-  const handleConcurrentChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const newValue = parseInt(e.target.value);
-    if (newValue > 0) {
-      setMaxConcurrentRequests(newValue);
-      await saveDataToDB("maxConcurrentRequests", newValue);
-    }
-  };
 
   // Save system prompt
   const saveSystemPrompt = async () => {
     await saveDataToDB(SYSTEM_PROMPT_NAME, inputSystemPrompt);
     setSystemPrompt(inputSystemPrompt);
+    toast.success("System prompt saved");
   };
 
   // Process a single image with Gemini
@@ -237,6 +220,7 @@ const ExtractTextPage: React.FC = () => {
     );
 
     setProcessingImageIds((prev) => [...prev, imageData.id]);
+    toast.info(`Processing ${imageData.file.name}...`);
 
     try {
       recordRequest();
@@ -253,17 +237,23 @@ const ExtractTextPage: React.FC = () => {
           .map((img) =>
             img.id === imageData.id
               ? {
-                  ...img,
-                  geminiResponse,
-                  hasError: geminiResponse.hasError,
-                  isProcessing: false,
-                  willProcess: false,
-                  timestamp: Date.now(),
-                }
+                ...img,
+                geminiResponse,
+                hasError: geminiResponse.hasError,
+                isProcessing: false,
+                willProcess: false,
+                timestamp: Date.now(),
+              }
               : img
           )
           .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
       );
+
+      if (geminiResponse.hasError) {
+        toast.error(`Failed to process ${imageData.file.name}`);
+      } else {
+        toast.success(`Successfully processed ${imageData.file.name}`);
+      }
     } catch (error) {
       console.error("Error processing image:", error);
       setImages((prev) =>
@@ -271,21 +261,24 @@ const ExtractTextPage: React.FC = () => {
           .map((img) =>
             img.id === imageData.id
               ? {
-                  ...img,
-                  geminiResponse: {
-                    thinking: "",
-                    ocrText: "",
-                    hasError: true,
-                  },
+                ...img,
+                geminiResponse: {
+                  thinking: "",
+                  ocrText: "",
                   hasError: true,
-                  isProcessing: false,
-                  willProcess: false,
-                  timestamp: Date.now(),
-                }
+                },
+                hasError: true,
+                isProcessing: false,
+                willProcess: false,
+                timestamp: Date.now(),
+              }
               : img
           )
           .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
       );
+      toast.error(`Error processing ${imageData.file.name}`, {
+        description: "See console for details",
+      });
     } finally {
       setProcessingImageIds((prev) => prev.filter((id) => id !== imageData.id));
     }
@@ -294,9 +287,9 @@ const ExtractTextPage: React.FC = () => {
   // Handle file upload
   const handleFileUpload = async (files: File[]) => {
     if (!apiKey) {
-      alert(
-        "API key is not set. Please set it in the API Key Settings section."
-      );
+      toast.error("API key is not set", {
+        description: "Please set it in the API Key Settings section.",
+      });
       return;
     }
 
@@ -304,7 +297,10 @@ const ExtractTextPage: React.FC = () => {
     cleanupOldTimestamps();
 
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
-    if (imageFiles.length === 0) return;
+    if (imageFiles.length === 0) {
+      toast.error("No valid image files found");
+      return;
+    }
 
     // Create placeholder images for all uploaded files
     const newImages = imageFiles.map((file) => {
@@ -329,6 +325,11 @@ const ExtractTextPage: React.FC = () => {
       [...prev, ...newImages].sort(
         (a, b) => (b.timestamp || 0) - (a.timestamp || 0)
       )
+    );
+
+    toast.success(
+      `Added ${imageFiles.length} image${imageFiles.length > 1 ? "s" : ""
+      } for processing`
     );
 
     // Switch to images tab
@@ -405,11 +406,11 @@ const ExtractTextPage: React.FC = () => {
         prev.map((msg) =>
           msg.id === assistantMessageId
             ? {
-                ...msg,
-                content: response.ocrText || "I couldn't process your request.",
-                isProcessing: false,
-                hasError: response.hasError,
-              }
+              ...msg,
+              content: response.ocrText || "I couldn't process your request.",
+              isProcessing: false,
+              hasError: response.hasError,
+            }
             : msg
         )
       );
@@ -421,12 +422,12 @@ const ExtractTextPage: React.FC = () => {
         prev.map((msg) =>
           msg.id === assistantMessageId
             ? {
-                ...msg,
-                content:
-                  "Sorry, an error occurred while processing your request.",
-                isProcessing: false,
-                hasError: true,
-              }
+              ...msg,
+              content:
+                "Sorry, an error occurred while processing your request.",
+              isProcessing: false,
+              hasError: true,
+            }
             : msg
         )
       );
@@ -441,9 +442,9 @@ const ExtractTextPage: React.FC = () => {
       prev.map((msg) =>
         msg.id === id
           ? {
-              ...msg,
-              content,
-            }
+            ...msg,
+            content,
+          }
           : msg
       )
     );
@@ -501,13 +502,32 @@ const ExtractTextPage: React.FC = () => {
 
       navigator.clipboard.writeText(formattedText);
       setCopiedAll(true);
+      toast.success("All text copied to clipboard");
       setTimeout(() => setCopiedAll(false), 2000);
+    } else {
+      toast.error("No processed images to copy");
     }
   };
 
   // Handle image deletion
   const handleDeleteImage = (id: string) => {
+    const imageToDelete = images.find((img) => img.id === id);
     setImages((prev) => prev.filter((img) => img.id !== id));
+    if (imageToDelete) {
+      toast.success(`Removed image: ${imageToDelete.file.name}`);
+    }
+  };
+
+  // Handle deletion of all images
+  const handleDeleteAll = () => {
+    if (images.length === 0) {
+      toast.error("No images to remove");
+      return;
+    }
+
+    const count = images.length;
+    setImages([]);
+    toast.success(`Removed all ${count} images`);
   };
 
   // Process images concurrently when slots are available
@@ -677,51 +697,6 @@ const ExtractTextPage: React.FC = () => {
               transition={{ duration: 0.2 }}
             >
               <div className="space-y-4">
-                {/* API Key Section */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">API Key</h3>
-                  {apiKey ? (
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-muted-foreground">
-                        API Key is set
-                      </p>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => setApiKey(null)}
-                        className="h-7 text-xs"
-                      >
-                        Remove API Key
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <Label htmlFor="apikey">Enter your Gemini API Key</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="apikey"
-                          value={inputApiKey}
-                          onChange={(e) => setInputApiKey(e.target.value)}
-                          placeholder="API Key"
-                          className="text-xs"
-                        />
-                        <Button
-                          size="sm"
-                          onClick={async () => {
-                            if (inputApiKey.trim()) {
-                              await saveDataToDB(API_KEY_NAME, inputApiKey);
-                              setApiKey(inputApiKey);
-                              setInputApiKey("");
-                            }
-                          }}
-                        >
-                          Save
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
                 {/* System Prompt */}
                 <div className="space-y-2">
                   <Label
@@ -823,192 +798,264 @@ const ExtractTextPage: React.FC = () => {
 
           <TabsContent value="images" className="h-full flex flex-col">
             {/* Images Tab Content */}
-            <Card className="mb-3 animate-in fade-in-0 duration-300">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium p-2">Upload Images</h3>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 text-xs gap-1 mr-2"
-                  disabled={!apiKey || requestTimestamps.length >= rpm}
-                  onClick={() => {
-                    const fileInput = document.getElementById(
-                      `file-upload-${id}`
-                    );
-                    if (fileInput) {
-                      fileInput.click();
-                    }
-                  }}
-                >
-                  <Upload className="h-3 w-3" />
-                  Select Images
-                </Button>
+            {!apiKey ? (
+              <div className="flex flex-col items-center justify-center h-full rounded-md border">
+                <div className="text-center p-6 max-w-md">
+                  <h2 className="text-xl font-semibold mb-2">
+                    No API Key Found
+                  </h2>
+                  <p className="text-muted-foreground mb-4">
+                    Please set your Gemini API key in the settings to start
+                    using the image processing.
+                  </p>
+                  <Button
+                    onClick={() => setShowSettings(true)}
+                    className="flex items-center gap-1"
+                  >
+                    <Settings className="h-4 w-4 mr-1" />
+                    Open Settings
+                    <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
               </div>
+            ) : images.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center gap-6 py-12">
+                <div className="text-center">
+                  <h3 className="text-xl font-medium mb-2">
+                    No Images Uploaded
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    Start by uploading some images for processing
+                  </p>
+                </div>
 
-              <div className="mt-3 flex flex-col gap-3 p-2">
-                {/* Model selection for images */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="image-model-select"
-                      className="text-xs font-medium"
+                <div className="w-full max-w-md">
+                  <Button
+                    className="w-full h-24 rounded-xl bg-primary hover:bg-primary/90 flex flex-col gap-2 shadow-lg"
+                    onClick={() => {
+                      const fileInput = document.getElementById(
+                        `file-upload-${id}`
+                      );
+                      if (fileInput) {
+                        fileInput.click();
+                      }
+                    }}
+                    disabled={requestTimestamps.length >= rpm}
+                  >
+                    <Upload className="h-8 w-8" />
+                    <span className="text-lg font-medium">Upload Images</span>
+                  </Button>
+                </div>
+
+                <div className="w-full max-w-md flex flex-wrap gap-3 justify-center">
+                  <Select
+                    value={selectedModel}
+                    onValueChange={handleModelChange}
+                  >
+                    <SelectTrigger className="h-9 text-sm font-semibold px-3 py-2 rounded-full min-w-[120px]">
+                      <SelectValue placeholder="Model">
+                        {selectedModel.includes("flash")
+                          ? "2.0 Flash"
+                          : "2.5 Pro"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="z-[1100]">
+                      <SelectItem value="gemini-2.0-flash-exp-image-generation">
+                        2.0 Flash
+                      </SelectItem>
+                      <SelectItem value="gemini-2.5-pro-exp-03-25">
+                        2.5 Pro
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={rpm.toString()}
+                    onValueChange={(value) => {
+                      const newRpm = parseInt(value);
+                      setRpm(newRpm);
+                      saveDataToDB("rpm", newRpm);
+                    }}
+                  >
+                    <SelectTrigger className="h-9 text-sm font-semibold px-3 py-2 rounded-full min-w-[120px]">
+                      <SelectValue placeholder="RPM">{rpm} RPM</SelectValue>
+                    </SelectTrigger>
+                    <SelectContent className="z-[1100]">
+                      <SelectItem value="2">2 RPM</SelectItem>
+                      <SelectItem value="5">5 RPM</SelectItem>
+                      <SelectItem value="10">10 RPM</SelectItem>
+                      <SelectItem value="15">15 RPM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="hidden">
+                  <FileUpload
+                    id={`file-upload-${id}`}
+                    onChange={handleFileUpload}
+                    disabled={requestTimestamps.length >= rpm}
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                <Card className="mb-3 animate-in fade-in-0 duration-300">
+                  <div className="p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <Button
+                      className="w-full sm:w-auto h-12 rounded-xl bg-primary hover:bg-primary/90 flex items-center gap-2"
+                      onClick={() => {
+                        const fileInput = document.getElementById(
+                          `file-upload-${id}`
+                        );
+                        if (fileInput) {
+                          fileInput.click();
+                        }
+                      }}
+                      disabled={requestTimestamps.length >= rpm}
                     >
-                      Model
-                    </Label>
-                    <Select
-                      value={selectedModel}
-                      onValueChange={handleModelChange}
-                    >
-                      <SelectTrigger
-                        id="image-model-select"
-                        className="h-8 text-xs"
+                      <Upload className="h-5 w-5" />
+                      <span className="font-medium">Upload More Images</span>
+                    </Button>
+
+                    <div className="w-full sm:w-auto flex flex-wrap justify-end gap-2">
+                      <Select
+                        value={selectedModel}
+                        onValueChange={handleModelChange}
                       >
-                        <SelectValue placeholder="Select a model" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
+                        <SelectTrigger className="h-9 text-sm font-semibold px-3 py-2 rounded-full min-w-[120px]">
+                          <SelectValue placeholder="Model">
+                            {selectedModel.includes("flash")
+                              ? "2.0 Flash"
+                              : "2.5 Pro"}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="z-[1100]">
                           <SelectItem value="gemini-2.0-flash-exp-image-generation">
-                            gemini-2.0-flash-exp-image-generation
+                            2.0 Flash
                           </SelectItem>
                           <SelectItem value="gemini-2.5-pro-exp-03-25">
-                            gemini-2.5-pro-exp-03-25
+                            2.5 Pro
                           </SelectItem>
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                        </SelectContent>
+                      </Select>
 
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="image-rpm-input"
-                      className="text-xs font-medium"
-                    >
-                      Requests Per Minute
-                    </Label>
-                    <div className="flex gap-2 items-center">
-                      <Input
-                        id="image-rpm-input"
-                        type="number"
-                        min="1"
-                        value={rpm}
-                        onChange={handleRpmChange}
-                        className="h-8 text-xs"
-                      />
-                      {countdown > 0 && (
-                        <span className="text-xs text-amber-600 animate-pulse">
-                          ({countdown}s)
-                        </span>
-                      )}
+                      <Select
+                        value={rpm.toString()}
+                        onValueChange={(value) => {
+                          const newRpm = parseInt(value);
+                          setRpm(newRpm);
+                          saveDataToDB("rpm", newRpm);
+                        }}
+                      >
+                        <SelectTrigger className="h-9 text-sm font-semibold px-3 py-2 rounded-full min-w-[120px]">
+                          <SelectValue placeholder="RPM">{rpm} RPM</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="z-[1100]">
+                          <SelectItem value="2">2 RPM</SelectItem>
+                          <SelectItem value="5">5 RPM</SelectItem>
+                          <SelectItem value="10">10 RPM</SelectItem>
+                          <SelectItem value="15">15 RPM</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <Label
-                      htmlFor="concurrent-requests"
-                      className="text-xs font-medium"
-                    >
-                      Concurrent Requests
-                    </Label>
-                    <Input
-                      id="concurrent-requests"
-                      type="number"
-                      min="1"
-                      max={rpm}
-                      value={maxConcurrentRequests}
-                      onChange={handleConcurrentChange}
-                      className="h-8 text-xs"
+                  <div className="hidden">
+                    <FileUpload
+                      id={`file-upload-${id}`}
+                      onChange={handleFileUpload}
+                      disabled={requestTimestamps.length >= rpm}
                     />
                   </div>
+                </Card>
+
+                {/* Status filter buttons */}
+                <div className="mb-3 p-3 rounded-md border flex flex-wrap gap-2 text-sm">
+                  <Button
+                    variant={selectedFilter === "all" ? "default" : "outline"}
+                    size="sm"
+                    className="h-8 px-3 flex items-center gap-1"
+                    onClick={() => setSelectedFilter("all")}
+                  >
+                    <Filter className="h-3 w-3" />
+                    <span className="font-medium">Total:</span>
+                    <span className="text-primary">{images.length}</span>
+                  </Button>
+
+                  <Button
+                    variant={
+                      selectedFilter === "completed" ? "default" : "outline"
+                    }
+                    size="sm"
+                    className="h-8 px-3 flex items-center gap-1"
+                    onClick={() => setSelectedFilter("completed")}
+                  >
+                    <span className="font-medium">Completed:</span>
+                    <span className="text-green-600">
+                      {
+                        images.filter(
+                          (img) =>
+                            !img.isProcessing &&
+                            !img.willProcess &&
+                            !img.hasError
+                        ).length
+                      }
+                    </span>
+                  </Button>
+
+                  <Button
+                    variant={
+                      selectedFilter === "processing" ? "default" : "outline"
+                    }
+                    size="sm"
+                    className="h-8 px-3 flex items-center gap-1"
+                    onClick={() => setSelectedFilter("processing")}
+                  >
+                    <span className="font-medium">Processing:</span>
+                    <span className="text-blue-600">
+                      {images.filter((img) => img.isProcessing).length}
+                    </span>
+                  </Button>
+
+                  <Button
+                    variant={
+                      selectedFilter === "queued" ? "default" : "outline"
+                    }
+                    size="sm"
+                    className="h-8 px-3 flex items-center gap-1"
+                    onClick={() => setSelectedFilter("queued")}
+                  >
+                    <span className="font-medium">Queued:</span>
+                    <span className="text-amber-600">
+                      {images.filter((img) => img.willProcess).length}
+                    </span>
+                  </Button>
+
+                  <Button
+                    variant={selectedFilter === "error" ? "default" : "outline"}
+                    size="sm"
+                    className="h-8 px-3 flex items-center gap-1"
+                    onClick={() => setSelectedFilter("error")}
+                  >
+                    <span className="font-medium">Error:</span>
+                    <span className="text-red-600">
+                      {images.filter((img) => img.hasError).length}
+                    </span>
+                  </Button>
                 </div>
-              </div>
 
-              <div className="hidden">
-                <FileUpload
-                  id={`file-upload-${id}`}
-                  onChange={handleFileUpload}
-                  disabled={!apiKey || requestTimestamps.length >= rpm}
-                />
-              </div>
-            </Card>
-
-            {/* Status filter buttons */}
-            <div className="mb-3 p-3 rounded-md border flex flex-wrap gap-2 text-sm">
-              <Button
-                variant={selectedFilter === "all" ? "default" : "outline"}
-                size="sm"
-                className="h-8 px-3 flex items-center gap-1"
-                onClick={() => setSelectedFilter("all")}
-              >
-                <Filter className="h-3 w-3" />
-                <span className="font-medium">Total:</span>
-                <span className="text-primary">{images.length}</span>
-              </Button>
-
-              <Button
-                variant={selectedFilter === "completed" ? "default" : "outline"}
-                size="sm"
-                className="h-8 px-3 flex items-center gap-1"
-                onClick={() => setSelectedFilter("completed")}
-              >
-                <span className="font-medium">Completed:</span>
-                <span className="text-green-600">
-                  {
-                    images.filter(
-                      (img) =>
-                        !img.isProcessing && !img.willProcess && !img.hasError
-                    ).length
-                  }
-                </span>
-              </Button>
-
-              <Button
-                variant={
-                  selectedFilter === "processing" ? "default" : "outline"
-                }
-                size="sm"
-                className="h-8 px-3 flex items-center gap-1"
-                onClick={() => setSelectedFilter("processing")}
-              >
-                <span className="font-medium">Processing:</span>
-                <span className="text-blue-600">
-                  {images.filter((img) => img.isProcessing).length}
-                </span>
-              </Button>
-
-              <Button
-                variant={selectedFilter === "queued" ? "default" : "outline"}
-                size="sm"
-                className="h-8 px-3 flex items-center gap-1"
-                onClick={() => setSelectedFilter("queued")}
-              >
-                <span className="font-medium">Queued:</span>
-                <span className="text-amber-600">
-                  {images.filter((img) => img.willProcess).length}
-                </span>
-              </Button>
-
-              <Button
-                variant={selectedFilter === "error" ? "default" : "outline"}
-                size="sm"
-                className="h-8 px-3 flex items-center gap-1"
-                onClick={() => setSelectedFilter("error")}
-              >
-                <span className="font-medium">Error:</span>
-                <span className="text-red-600">
-                  {images.filter((img) => img.hasError).length}
-                </span>
-              </Button>
-            </div>
-
-            <div className="flex-1 mb-2">
-              <ImagesTab
-                images={getFilteredImages()}
-                handleRetry={handleRetry}
-                copiedAll={copiedAll}
-                copyAllToClipboard={copyAllToClipboard}
-                handleDelete={handleDeleteImage}
-              />
-            </div>
+                <div className="flex-1 mb-2">
+                  <ImagesTab
+                    images={getFilteredImages()}
+                    handleRetry={handleRetry}
+                    copiedAll={copiedAll}
+                    copyAllToClipboard={copyAllToClipboard}
+                    handleDelete={handleDeleteImage}
+                    handleDeleteAll={handleDeleteAll}
+                  />
+                </div>
+              </>
+            )}
           </TabsContent>
         </div>
       </Tabs>
