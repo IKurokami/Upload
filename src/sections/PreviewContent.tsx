@@ -14,7 +14,7 @@ const PreviewContent: React.FC<PreviewContentProps> = ({
   lazyLoad,
 }) => {
   if (previewTab === "visual") {
-    return extractedLinks.length > 0 ? (
+    return extractedLinks?.length > 0 ? (
       <div className="flex flex-col items-center">
         {extractedLinks.map((link, index) => (
           <img
@@ -33,7 +33,7 @@ const PreviewContent: React.FC<PreviewContentProps> = ({
     );
   } else {
     const codeToRender =
-      extractedLinks.length > 0
+      extractedLinks?.length > 0
         ? extractedLinks
             .map(
               (link) =>

@@ -114,7 +114,7 @@ const AlbumsPage: React.FC<AlbumsPageProps> = () => {
   const handleCloseRenameDialog = () => {
     // First close the dialog
     setRenameDialogOpen(false);
-    
+
     // Then reset state on next animation frame
     requestAnimationFrame(() => {
       setSelectedAlbumId(null);
@@ -147,17 +147,17 @@ const AlbumsPage: React.FC<AlbumsPageProps> = () => {
       // Store values before closing dialog
       const albumIdToUpdate = selectedAlbumId;
       const nameToUpdate = newAlbumName;
-      
+
       // Close dialog before any async operations
       handleCloseRenameDialog();
-      
+
       try {
         // Perform the database update
         await renameAlbumInDB(albumIdToUpdate, nameToUpdate);
-        
+
         // Reload albums
         await loadSavedAlbums();
-        
+
         // Show success message
         toast.success(`Album renamed to "${nameToUpdate}"`);
       } catch (error) {
@@ -216,7 +216,7 @@ const AlbumsPage: React.FC<AlbumsPageProps> = () => {
         <CardContent className="p-4">
           <ScrollArea className="w-full h-[600px] rounded-md">
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 grid-flow-row auto-rows-fr">
-              {filteredAlbums.length > 0 ? (
+              {filteredAlbums?.length > 0 ? (
                 filteredAlbums.map((album) => (
                   <AlbumCard
                     key={album.id}
@@ -234,7 +234,7 @@ const AlbumsPage: React.FC<AlbumsPageProps> = () => {
           </ScrollArea>
         </CardContent>
         <CardFooter className="p-4 border-t">
-          <Link to="/upload">
+          <Link to="/Upload/Upload">
             <Button variant="outline">
               <Upload size={16} className="mr-2" />
               Back to Uploader

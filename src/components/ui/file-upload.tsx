@@ -39,7 +39,7 @@ export const FileUpload = ({
 
   const handleFileChange = (newFiles: File[]) => {
     if (disabled) return;
-    const remaining = 1000 - files.length;
+    const remaining = 1000 - files?.length;
     if (remaining <= 0) return;
     const filesToAdd = newFiles.slice(0, remaining);
     
@@ -59,7 +59,7 @@ export const FileUpload = ({
 
   // Clear the input after files are handled
   useEffect(() => {
-    if (files.length === 0 && fileInputRef.current) {
+    if (files?.length === 0 && fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   }, [files]);
@@ -75,7 +75,7 @@ export const FileUpload = ({
   });
 
   // Display the latest files instead of the first three
-  const filesToDisplay = files.length > 3 ? files.slice(-2) : files;
+  const filesToDisplay = files?.length > 3 ? files.slice(-2) : files;
 
   return (
     <div className={cn("w-full", disabled && "opacity-60 cursor-not-allowed")} {...getRootProps()}>
@@ -102,9 +102,9 @@ export const FileUpload = ({
             Drag or drop your files here or click to upload
           </p>
           <div className="relative w-full mt-10 max-w-xl mx-auto">
-            {files.length > 0 && (
+            {files?.length > 0 && (
               <>
-                {files.length > 3 && (
+                {files?.length > 3 && (
                   <motion.div
                     layoutId="file-upload-ellipsis"
                   >
@@ -113,11 +113,11 @@ export const FileUpload = ({
                 )}
                 {filesToDisplay.map((file, idx) => (
                   <motion.div
-                    key={"file" + (files.length - filesToDisplay.length + idx)}
+                    key={"file" + (files?.length - filesToDisplay?.length + idx)}
                     layoutId={
                       idx === 0
                         ? "file-upload"
-                        : "file-upload-" + (files.length - filesToDisplay.length + idx)
+                        : "file-upload-" + (files?.length - filesToDisplay?.length + idx)
                     }
                   >
                     <div className="flex justify-between w-full items-center gap-4">
@@ -159,7 +159,7 @@ export const FileUpload = ({
                 ))}
               </>
             )}
-            {!files.length && (
+            {!files?.length && (
               <motion.div
                 layoutId="file-upload"
                 variants={mainVariant}
@@ -183,7 +183,7 @@ export const FileUpload = ({
               </motion.div>
             )}
 
-            {!files.length && (
+            {!files?.length && (
               <motion.div
                 variants={secondaryVariant}
               ></motion.div>

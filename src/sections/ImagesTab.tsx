@@ -213,7 +213,7 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
     setDeleteAllDialogOpen(false);
   };
 
-  if (images.length === 0) {
+  if (images?.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-10rem)] text-muted-foreground">
         <AlertCircle className="h-10 w-10 mb-2 text-muted-foreground/50" />
@@ -230,7 +230,7 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
       <div className="flex flex-col bg-background rounded-md border">
         <div className="p-3 border-b flex flex-col xs:flex-row xs:justify-between xs:items-center gap-2">
           <h2 className="text-base font-medium mb-2 xs:mb-0">
-            Processed Images ({images.length})
+            Processed Images ({images?.length})
           </h2>
           <div className="flex flex-col xs:flex-row xs:items-center gap-2 w-full xs:w-auto">
             <Select
@@ -330,7 +330,7 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete All Images</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete all {images.length} images? This action cannot be undone.
+              Are you sure you want to delete all {images?.length} images? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -387,7 +387,7 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
                   zIndex: 1,
                 }}
               >
-                {overlayImage.file.name.length > 15
+                {overlayImage.file.name?.length > 15
                   ? `${overlayImage.file.name.substring(0, 15)}...`
                   : overlayImage.file.name}
               </span>

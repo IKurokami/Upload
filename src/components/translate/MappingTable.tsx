@@ -16,14 +16,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Plus, 
-  X, 
-  FilePlus, 
-  Lightbulb, 
-  ArrowUp, 
-  FileDown, 
-  FileUp, 
+import {
+  Plus,
+  X,
+  FilePlus,
+  Lightbulb,
+  ArrowUp,
+  FileDown,
+  FileUp,
   Trash2,
   FileText,
   Text,
@@ -86,11 +86,11 @@ const MappingTable: React.FC<MappingTableProps> = ({
             </CardDescription>
           </div>
           <Badge variant="outline" className="h-6">
-            {mappingTable.length} {mappingTable.length === 1 ? "Entry" : "Entries"}
+            {mappingTable?.length} {mappingTable?.length === 1 ? "Entry" : "Entries"}
           </Badge>
         </div>
       </CardHeader>
-      
+
       <CardContent className="p-4 pb-0">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row justify-between gap-2 sm:gap-4">
@@ -111,7 +111,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            
+
             <div className="flex flex-wrap gap-2 justify-end">
               <TooltipProvider>
                 <Tooltip>
@@ -140,7 +140,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              
+
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -242,7 +242,7 @@ const MappingTable: React.FC<MappingTableProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {mappingTable.length === 0 ? (
+                {mappingTable?.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center h-24 text-muted-foreground">
                       <div className="flex flex-col items-center justify-center">

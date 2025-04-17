@@ -135,7 +135,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const files = Array.from(e.target.files || []);
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
 
-    if (imageFiles.length === 0) return;
+    if (imageFiles?.length === 0) return;
 
     const newPreviews = imageFiles.map((file) => URL.createObjectURL(file));
 
@@ -218,9 +218,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const handleSubmit = async () => {
     const trimmedValue = inputValue.trim();
-    if ((!trimmedValue && selectedFiles.length === 0) || !apiKey) return;
+    if ((!trimmedValue && selectedFiles?.length === 0) || !apiKey) return;
 
-    if (selectedFiles.length > 0) {
+    if (selectedFiles?.length > 0) {
       // If there are images, convert to base64 and send as object
       onSendMessage(trimmedValue, [...selectedFiles]);
     } else {
@@ -254,7 +254,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       item.type.startsWith("image/")
     );
 
-    if (imageItems.length > 0) {
+    if (imageItems?.length > 0) {
       const newFiles = imageItems.map((item) => item.getAsFile()!);
       const newPreviews = newFiles.map((file) => URL.createObjectURL(file));
 
@@ -504,13 +504,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
                               {/* Display images for user messages */}
                               {(message.imageDataUrls &&
-                              message.imageDataUrls.length > 0
+                              message.imageDataUrls?.length > 0
                                 ? message.imageDataUrls
                                 : typeof message.content === "object" &&
                                   message.content?.imageBase64s) && (
                                 <div className="mt-2 flex flex-wrap gap-2 max-w-full overflow-hidden">
                                   {(message.imageDataUrls &&
-                                  message.imageDataUrls.length > 0
+                                  message.imageDataUrls?.length > 0
                                     ? message.imageDataUrls
                                     : (typeof message.content === "object" &&
                                         message.content?.imageBase64s) ||
@@ -585,12 +585,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                               // Process images if present
                               const imageUrls =
                                 message.imageDataUrls &&
-                                message.imageDataUrls.length > 0
+                                message.imageDataUrls?.length > 0
                                   ? message.imageDataUrls
                                   : typeof message.content === "object" &&
                                     message.content?.imageBase64s;
 
-                              if (imageUrls && imageUrls.length > 0) {
+                              if (imageUrls && imageUrls?.length > 0) {
                                 try {
                                   // Convert image URLs to Files and add to selectedFiles
                                   const files = await Promise.all(
@@ -644,7 +644,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                               // Fix: Check for imageDataUrls first, which is where images are stored in the message
                               const imageUrls =
                                 message.imageDataUrls &&
-                                message.imageDataUrls.length > 0
+                                message.imageDataUrls?.length > 0
                                   ? message.imageDataUrls
                                   : extMessage.imageBase64s ||
                                     (typeof message.content === "object" &&
@@ -655,13 +655,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                   : message.content?.content || "";
                               if (
                                 extMessage.originalFiles &&
-                                extMessage.originalFiles.length > 0
+                                extMessage.originalFiles?.length > 0
                               ) {
                                 onSendMessage(
                                   textContent,
                                   extMessage.originalFiles
                                 );
-                              } else if (imageUrls && imageUrls.length > 0) {
+                              } else if (imageUrls && imageUrls?.length > 0) {
                                 try {
                                   const files = await Promise.all(
                                     imageUrls.map(
@@ -722,12 +722,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                           // Process images if present
                           const imageUrls =
                             message.imageDataUrls &&
-                            message.imageDataUrls.length > 0
+                            message.imageDataUrls?.length > 0
                               ? message.imageDataUrls
                               : typeof message.content === "object" &&
                                 message.content?.imageBase64s;
 
-                          if (imageUrls && imageUrls.length > 0) {
+                          if (imageUrls && imageUrls?.length > 0) {
                             try {
                               // Convert image URLs to Files and add to selectedFiles
                               const files = await Promise.all(
@@ -775,7 +775,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                           // Fix: Check for imageDataUrls first, which is where images are stored in the message
                           const imageUrls =
                             message.imageDataUrls &&
-                            message.imageDataUrls.length > 0
+                            message.imageDataUrls?.length > 0
                               ? message.imageDataUrls
                               : extMessage.imageBase64s ||
                                 (typeof message.content === "object" &&
@@ -786,13 +786,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                               : message.content?.content || "";
                           if (
                             extMessage.originalFiles &&
-                            extMessage.originalFiles.length > 0
+                            extMessage.originalFiles?.length > 0
                           ) {
                             onSendMessage(
                               textContent,
                               extMessage.originalFiles
                             );
-                          } else if (imageUrls && imageUrls.length > 0) {
+                          } else if (imageUrls && imageUrls?.length > 0) {
                             try {
                               const files = await Promise.all(
                                 imageUrls.map(
@@ -919,13 +919,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
                         {/* Display images for user messages */}
                         {(message.imageDataUrls &&
-                        message.imageDataUrls.length > 0
+                        message.imageDataUrls?.length > 0
                           ? message.imageDataUrls
                           : typeof message.content === "object" &&
                             message.content?.imageBase64s) && (
                           <div className="mt-2 flex flex-wrap gap-2 max-w-full overflow-hidden">
                             {(message.imageDataUrls &&
-                            message.imageDataUrls.length > 0
+                            message.imageDataUrls?.length > 0
                               ? message.imageDataUrls
                               : (typeof message.content === "object" &&
                                   message.content?.imageBase64s) ||
@@ -1044,12 +1044,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </div>
 
             {/* File preview area */}
-            {previewUrls.length > 0 && (
+            {previewUrls?.length > 0 && (
               <div className="mt-2">
                 <div className="flex items-center justify-between border-t pt-2">
                   <span className="text-sm text-muted-foreground">
-                    {previewUrls.length} file
-                    {previewUrls.length !== 1 ? "s" : ""} selected
+                    {previewUrls?.length} file
+                    {previewUrls?.length !== 1 ? "s" : ""} selected
                   </span>
                   <Button
                     variant="ghost"
@@ -1156,7 +1156,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <Button
                 type="button"
                 disabled={
-                  (!inputValue.trim() && selectedFiles.length === 0) ||
+                  (!inputValue.trim() && selectedFiles?.length === 0) ||
                   !apiKey ||
                   isProcessing
                 }
@@ -1230,7 +1230,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 size="icon"
                 className="h-8 w-8 rounded-full"
                 onClick={zoomOut}
-                disabled={zoomLevel <= 0.5}
+                disabled={zoomLevel <= 0.1}
               >
                 <ZoomOut className="h-4 w-4" />
               </Button>
@@ -1276,12 +1276,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </style>
           <div className="relative flex flex-col w-full h-full min-h-0 overflow-hidden">
             {/* File preview area in dialog */}
-            {previewUrls.length > 0 && (
+            {previewUrls?.length > 0 && (
               <div className="mb-4">
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-sm text-muted-foreground">
-                    {previewUrls.length} file
-                    {previewUrls.length !== 1 ? "s" : ""} selected
+                    {previewUrls?.length} file
+                    {previewUrls?.length !== 1 ? "s" : ""} selected
                   </span>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2 overflow-auto max-h-[80px]">
@@ -1427,7 +1427,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </Select>
 
                 {/* Clear files button shown only when files are present */}
-                {selectedFiles.length > 0 && (
+                {selectedFiles?.length > 0 && (
                   <Button
                     variant="ghost"
                     size="sm"
@@ -1450,7 +1450,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 }}
                 className="h-9 px-5 rounded-full bg-primary text-primary-foreground font-semibold z-10 shadow-lg flex items-center"
                 disabled={
-                  (!inputValue.trim() && selectedFiles.length === 0) ||
+                  (!inputValue.trim() && selectedFiles?.length === 0) ||
                   !apiKey ||
                   isProcessing
                 }

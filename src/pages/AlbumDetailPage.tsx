@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +21,10 @@ import {
   Edit,
   ChevronLeft,
   ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  X,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -68,6 +72,12 @@ const AlbumDetailPage: React.FC = () => {
   const [saveMessage, setSaveMessage] = useState<SaveMessage | null>(null);
   const [editMode, setEditMode] = useState<boolean>(false);
   const [activeId, setActiveId] = useState<string | number | null>(null); // For drag and drop
+  const [zoom, setZoom] = useState<number>(1);
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const lastPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [expanded, setExpanded] = useState<boolean>(false);
 
   const sensors = useSensors(useSensor(PointerSensor));
 
@@ -198,9 +208,9 @@ const AlbumDetailPage: React.FC = () => {
       </head>
       <body class="container">
           ${linksHtml
-            .split("\n")
-            .map((imgTag) => `${imgTag}`)
-            .join("\n")}
+        .split("\n")
+        .map((imgTag) => `${imgTag}`)
+        .join("\n")}
       </body>
       </html>`;
 
@@ -242,6 +252,32 @@ const AlbumDetailPage: React.FC = () => {
       setImageUrlsText(imageUrls.join("\n"));
     }
     setEditMode(!editMode);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoom <= 1) return;
+    setDragging(true);
+    lastPos.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!dragging) return;
+    const deltaX = e.clientX - lastPos.current.x;
+    const deltaY = e.clientY - lastPos.current.y;
+
+    setPan(prev => ({
+      x: prev.x + deltaX,
+      y: prev.y + deltaY
+    }));
+
+    lastPos.current = { x: e.clientX, y: e.clientY };
+  };
+
+  const handleMouseUp = () => setDragging(false);
+
+  const resetZoomAndPan = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
   };
 
   if (loading) {
@@ -299,31 +335,93 @@ const AlbumDetailPage: React.FC = () => {
 
         <CardContent className="p-4 flex-1 min-h-0 overflow-auto my-2">
           {!editMode && (
-            <div>
+            <div className="relative">
               <Label className="my-2">Preview</Label>
-
-              <ScrollArea className="w-full h-[40vh] rounded-md border p-0">
-                <div
-                  className="h-full w-full flex flex-col items-center justify-center p-4"
-                  style={{ height: "100%" }}
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="absolute top-2 right-2 z-20"
+                  onClick={() => setExpanded(true)}
                 >
-                  {imageUrls.length === 0 ? (
-                    <div className="flex items-center justify-center w-full h-full text-gray-400">
-                      No images in this album.
+                  <Maximize2 className="h-4 w-4" />
+                </Button>
+                <ScrollArea className="w-full h-[40vh] rounded-md border p-0">
+                  <div
+                    ref={containerRef}
+                    className="h-full w-full flex flex-col items-center justify-center p-4"
+                    style={{ height: "100%" }}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
+                  >
+                    {imageUrls?.length === 0 ? (
+                      <div className="flex items-center justify-center w-full h-full text-gray-400">
+                        No images in this album.
+                      </div>
+                    ) : (
+                      <div
+                        className="manga-container w-full flex flex-col"
+                        style={{
+                          transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+                          transformOrigin: "top center",
+                          cursor: zoom > 1 && dragging ? "grabbing" : zoom > 1 ? "grab" : "default",
+                        }}
+                        onMouseDown={handleMouseDown}
+                      >
+                        {imageUrls.map((url, index) => (
+                          <div
+                            key={index}
+                            className="relative w-full flex items-center justify-center overflow-visible"
+                            style={{
+                              marginBottom: "-1px" // Remove any potential gap between images
+                            }}
+                          >
+                            <img
+                              src={url}
+                              alt={`Image ${index + 1}`}
+                              className="block w-full max-w-full object-contain select-none"
+                              style={{
+                                userSelect: "none",
+                              }}
+                              draggable={false}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Zoom controls overlay */}
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-background/80 p-2 rounded-full shadow-md z-10">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-full"
+                        onClick={() => setZoom((z) => Math.max(0.2, z - 0.2))}
+                        disabled={zoom <= 0.2}
+                      >
+                        <ZoomOut className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 min-w-14 text-xs"
+                        onClick={resetZoomAndPan}
+                      >
+                        {Math.round(zoom * 100)}%
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-full"
+                        onClick={() => setZoom((z) => Math.min(5, z + 0.2))}
+                        disabled={zoom >= 5}
+                      >
+                        <ZoomIn className="h-4 w-4" />
+                      </Button>
                     </div>
-                  ) : (
-                    imageUrls.map((url, index) => (
-                      <img
-                        key={index}
-                        src={url}
-                        alt={`Image ${index + 1}`}
-                        className="block w-auto h-full max-h-full object-contain"
-                        style={{ height: "100%", maxHeight: "100%" }}
-                      />
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
+                  </div>
+                </ScrollArea>
+              </div>
             </div>
           )}
           {editMode && (
@@ -357,7 +455,7 @@ const AlbumDetailPage: React.FC = () => {
                           className="h-full flex flex-col items-center justify-center p-4"
                           style={{ height: "100%" }}
                         >
-                          {imageUrls.length === 0 ? (
+                          {imageUrls?.length === 0 ? (
                             <div className="flex items-center justify-center w-full h-full text-gray-400">
                               No images in this album.
                             </div>
@@ -368,7 +466,7 @@ const AlbumDetailPage: React.FC = () => {
                                 id={url}
                                 url={url}
                                 index={index}
-                                // If SortableItem renders an img, ensure it uses h-full, max-h-full, object-contain
+                              // If SortableItem renders an img, ensure it uses h-full, max-h-full, object-contain
                               />
                             ))
                           )}
@@ -469,6 +567,106 @@ const AlbumDetailPage: React.FC = () => {
           </div>
         </CardFooter>
       </Card>
+
+      {expanded && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+          <div className="bg-background rounded-lg w-[95vw] h-[95vh] flex flex-col relative">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold">
+                Expanded View - {albumName}
+              </h3>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={resetZoomAndPan}
+                >
+                  <span className="text-xs font-medium">{Math.round(zoom * 100)}%</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setExpanded(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div
+              className="flex-1 overflow-auto p-0"
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
+              {imageUrls?.length === 0 ? (
+                <div className="flex items-center justify-center w-full h-full text-gray-400">
+                  No images in this album.
+                </div>
+              ) : (
+                <div
+                  className="manga-container w-full flex flex-col items-center"
+                  style={{
+                    transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+                    transformOrigin: "top center",
+                    cursor: zoom > 1 && dragging ? "grabbing" : zoom > 1 ? "grab" : "default",
+                  }}
+                  onMouseDown={handleMouseDown}
+                >
+                  {imageUrls.map((url, index) => (
+                    <div
+                      key={index}
+                      className="relative w-full flex items-center justify-center overflow-visible"
+                      style={{
+                        marginBottom: "-1px" // Remove any potential gap between images
+                      }}
+                    >
+                      <img
+                        src={url}
+                        alt={`Image ${index + 1}`}
+                        className="block w-full max-w-full object-contain select-none"
+                        style={{
+                          userSelect: "none",
+                        }}
+                        draggable={false}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Zoom controls overlay */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-background/80 p-2 rounded-full shadow-md z-10">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 rounded-full"
+                  onClick={() => setZoom((z) => Math.max(0.2, z - 0.2))}
+                  disabled={zoom <= 0.2}
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 min-w-14 text-xs"
+                  onClick={resetZoomAndPan}
+                >
+                  {Math.round(zoom * 100)}%
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 rounded-full"
+                  onClick={() => setZoom((z) => Math.min(5, z + 0.2))}
+                  disabled={zoom >= 5}
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

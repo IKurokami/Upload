@@ -122,12 +122,12 @@ const ExtractTextPage: React.FC = () => {
   useEffect(() => {
     setMaxConcurrentRequests(rpm);
     const updateCountdown = () => {
-      if (requestTimestamps.length === 0) {
+      if (requestTimestamps?.length === 0) {
         setCountdown(0);
         return;
       }
 
-      if (requestTimestamps.length < rpm) {
+      if (requestTimestamps?.length < rpm) {
         setCountdown(0);
         return;
       }
@@ -135,7 +135,7 @@ const ExtractTextPage: React.FC = () => {
       // Get the oldest timestamp that's within our rate limit
       const now = Date.now();
       const oldestRelevantTimestamp =
-        requestTimestamps[requestTimestamps.length - rpm];
+        requestTimestamps[requestTimestamps?.length - rpm];
       const resetTime = oldestRelevantTimestamp + 60000; // one minute after oldest request
 
       if (now >= resetTime) {
@@ -173,7 +173,7 @@ const ExtractTextPage: React.FC = () => {
     cleanupOldTimestamps();
 
     // If we have fewer requests in the last minute than our RPM, we can proceed
-    return requestTimestamps.length < rpm;
+    return requestTimestamps?.length < rpm;
   };
 
   // Record a new request timestamp
@@ -183,7 +183,7 @@ const ExtractTextPage: React.FC = () => {
     setRequestTimestamps((prev) => {
       const newTimestamps = [...prev, now].sort((a, b) => b - a);
       // Strictly enforce RPM limit by keeping only the most recent timestamps up to RPM
-      return newTimestamps.slice(0, Math.min(rpm, newTimestamps.length));
+      return newTimestamps.slice(0, Math.min(rpm, newTimestamps?.length));
     });
   };
 
@@ -297,7 +297,7 @@ const ExtractTextPage: React.FC = () => {
     cleanupOldTimestamps();
 
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
-    if (imageFiles.length === 0) {
+    if (imageFiles?.length === 0) {
       toast.error("No valid image files found");
       return;
     }
@@ -328,7 +328,7 @@ const ExtractTextPage: React.FC = () => {
     );
 
     toast.success(
-      `Added ${imageFiles.length} image${imageFiles.length > 1 ? "s" : ""
+      `Added ${imageFiles?.length} image${imageFiles?.length > 1 ? "s" : ""
       } for processing`
     );
 
@@ -488,7 +488,7 @@ const ExtractTextPage: React.FC = () => {
       );
     }
 
-    if (imagesToCopy.length > 0) {
+    if (imagesToCopy?.length > 0) {
       const formattedText = imagesToCopy
         .sort((a, b) => {
           const numA = parseInt(a.file.name.split(".")[0], 10);
@@ -520,12 +520,12 @@ const ExtractTextPage: React.FC = () => {
 
   // Handle deletion of all images
   const handleDeleteAll = () => {
-    if (images.length === 0) {
+    if (images?.length === 0) {
       toast.error("No images to remove");
       return;
     }
 
-    const count = images.length;
+    const count = images?.length;
     setImages([]);
     toast.success(`Removed all ${count} images`);
   };
@@ -537,11 +537,11 @@ const ExtractTextPage: React.FC = () => {
       if (!apiKey || !canProcessImage()) return;
 
       // Find out how many more images we can process concurrently
-      const currentlyProcessing = processingImageIds.length;
+      const currentlyProcessing = processingImageIds?.length;
       const slotsAvailable = Math.min(
         maxConcurrentRequests - currentlyProcessing, // Don't exceed max concurrent
-        rpm - requestTimestamps.length, // Don't exceed RPM
-        images.filter((img) => img.willProcess).length // Don't exceed number of queued images
+        rpm - requestTimestamps?.length, // Don't exceed RPM
+        images.filter((img) => img.willProcess)?.length // Don't exceed number of queued images
       );
 
       if (slotsAvailable <= 0) return;
@@ -551,7 +551,7 @@ const ExtractTextPage: React.FC = () => {
         .filter((img) => img.willProcess && !img.isProcessing)
         .slice(0, slotsAvailable);
 
-      if (imagesToProcess.length === 0) return;
+      if (imagesToProcess?.length === 0) return;
 
       // Process each image concurrently
       await Promise.all(imagesToProcess.map((img) => processImage(img)));
@@ -564,10 +564,10 @@ const ExtractTextPage: React.FC = () => {
 
     return () => clearTimeout(timeoutId);
   }, [
-    processingImageIds.length,
+    processingImageIds?.length,
     images,
     apiKey,
-    requestTimestamps.length,
+    requestTimestamps?.length,
     maxConcurrentRequests,
   ]);
 
@@ -665,7 +665,7 @@ const ExtractTextPage: React.FC = () => {
 
           <div className="mt-2 xs:mt-0 xs:ml-3 px-2 py-1 bg-primary/10 rounded-full text-xs font-medium inline-flex items-center animate-in fade-in slide-in-from-left-4 duration-300">
             <span className="text-primary">
-              {requestTimestamps.length}/{rpm}
+              {requestTimestamps?.length}/{rpm}
             </span>
             {countdown > 0 && (
               <span className="ml-1 text-amber-600 animate-pulse">
@@ -739,9 +739,9 @@ const ExtractTextPage: React.FC = () => {
           >
             <ImageIcon className="h-3.5 w-3.5" />
             Images{" "}
-            {images.length > 0 && (
+            {images?.length > 0 && (
               <span className="bg-primary/15 text-primary px-1.5 py-0.5 rounded-full text-xs ml-1">
-                {images.length}
+                {images?.length}
               </span>
             )}
           </TabsTrigger>
@@ -818,7 +818,7 @@ const ExtractTextPage: React.FC = () => {
                   </Button>
                 </div>
               </div>
-            ) : images.length === 0 ? (
+            ) : images?.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center gap-6 py-12">
                 <div className="text-center">
                   <h3 className="text-xl font-medium mb-2">
@@ -840,7 +840,7 @@ const ExtractTextPage: React.FC = () => {
                         fileInput.click();
                       }
                     }}
-                    disabled={requestTimestamps.length >= rpm}
+                    disabled={requestTimestamps?.length >= rpm}
                   >
                     <Upload className="h-8 w-8" />
                     <span className="text-lg font-medium">Upload Images</span>
@@ -893,7 +893,7 @@ const ExtractTextPage: React.FC = () => {
                   <FileUpload
                     id={`file-upload-${id}`}
                     onChange={handleFileUpload}
-                    disabled={requestTimestamps.length >= rpm}
+                    disabled={requestTimestamps?.length >= rpm}
                   />
                 </div>
               </div>
@@ -911,7 +911,7 @@ const ExtractTextPage: React.FC = () => {
                           fileInput.click();
                         }
                       }}
-                      disabled={requestTimestamps.length >= rpm}
+                      disabled={requestTimestamps?.length >= rpm}
                     >
                       <Upload className="h-5 w-5" />
                       <span className="font-medium">Upload More Images</span>
@@ -964,7 +964,7 @@ const ExtractTextPage: React.FC = () => {
                     <FileUpload
                       id={`file-upload-${id}`}
                       onChange={handleFileUpload}
-                      disabled={requestTimestamps.length >= rpm}
+                      disabled={requestTimestamps?.length >= rpm}
                     />
                   </div>
                 </Card>
@@ -979,7 +979,7 @@ const ExtractTextPage: React.FC = () => {
                   >
                     <Filter className="h-3 w-3" />
                     <span className="font-medium">Total:</span>
-                    <span className="text-primary">{images.length}</span>
+                    <span className="text-primary">{images?.length}</span>
                   </Button>
 
                   <Button
@@ -998,7 +998,7 @@ const ExtractTextPage: React.FC = () => {
                             !img.isProcessing &&
                             !img.willProcess &&
                             !img.hasError
-                        ).length
+                        )?.length
                       }
                     </span>
                   </Button>
@@ -1013,7 +1013,7 @@ const ExtractTextPage: React.FC = () => {
                   >
                     <span className="font-medium">Processing:</span>
                     <span className="text-blue-600">
-                      {images.filter((img) => img.isProcessing).length}
+                      {images.filter((img) => img.isProcessing)?.length}
                     </span>
                   </Button>
 
@@ -1027,7 +1027,7 @@ const ExtractTextPage: React.FC = () => {
                   >
                     <span className="font-medium">Queued:</span>
                     <span className="text-amber-600">
-                      {images.filter((img) => img.willProcess).length}
+                      {images.filter((img) => img.willProcess)?.length}
                     </span>
                   </Button>
 
@@ -1039,7 +1039,7 @@ const ExtractTextPage: React.FC = () => {
                   >
                     <span className="font-medium">Error:</span>
                     <span className="text-red-600">
-                      {images.filter((img) => img.hasError).length}
+                      {images.filter((img) => img.hasError)?.length}
                     </span>
                   </Button>
                 </div>

@@ -5,19 +5,13 @@ import {
   X,
   ArrowUp,
   Eraser,
-  History,
 } from "lucide-react";
 import { useArcrylicBg } from "@/contexts/ArcrylicBgContext";
-import { cn } from "@/lib/utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getDataFromDB, saveDataToDB } from "@/lib/db";
 import { runGeminiTranslation } from "@/lib/gemini";
 import { toast } from "sonner";
-import TranslationHistory from "@/components/translate/TranslationHistory";
 import TranslationInputOutput from "@/components/translate/TranslationInputOutput";
 import CollectionManager from "@/components/translate/CollectionManager";
-import MappingTable from "@/components/translate/MappingTable";
-import RelationshipsTable from "@/components/translate/RelationshipsTable";
 import TableUpdatesPanel from "@/components/translate/TableUpdatesPanel";
 import {
   MappingEntry,
@@ -44,20 +38,30 @@ const TranslatePage: React.FC = () => {
 
   // Translation history state
   const [translationHistory, setTranslationHistory] = useState<TranslationHistoryEntry[]>([]);
-  const [showHistory, setShowHistory] = useState<boolean>(false);
+  const [, setShowHistory] = useState<boolean>(false);
 
   // Scroll to top button visibility
   const [, setShowScrollButton] = useState<boolean>(true);
 
   // Model selection
   const [selectedModel, setSelectedModel] = useState<string>(
-    "gemini-2.0-flash-exp-image-generation"
+    "gemini-2.0-flash-exp"
   );
+
   const models = [
-    "gemini-2.0-flash-exp-image-generation",
-    "gemini-2.0-flash-thinking-exp-01-21",
-    "gemini-2.5-pro-exp-03-25",
+    "gemini-2.0-flash-exp", //Recommended
+    "gemini-2.0-flash-exp-image-generation", //Image Generation
+    "gemini-2.0-flash-thinking-exp-01-21", //No support for function calling 
+    "gemini-2.5-pro-exp-03-25", //Pro but Stupid (Super slow)
   ];
+
+  // Model descriptions
+  const modelDescriptions: Record<string, string> = {
+    "gemini-2.0-flash-exp": "Recommended",
+    "gemini-2.0-flash-exp-image-generation": "Image Generation",
+    "gemini-2.0-flash-thinking-exp-01-21": "No support for function calling",
+    "gemini-2.5-pro-exp-03-25": "Pro but Stupid (Super slow)",
+  };
 
   // Settings
   const [apiKey, setApiKey] = useState<string | null>(null);
@@ -76,7 +80,7 @@ const TranslatePage: React.FC = () => {
     useState<boolean>(false);
 
   // Current active tables
-  const [activeTab, setActiveTab] = useState<string>("mapping");
+  const [activeTab] = useState<string>("mapping");
   const [mappingTable, setMappingTable] = useState<MappingEntry[]>([]);
   const [relationshipsTable, setRelationshipsTable] = useState<
     RelationshipEntry[]
@@ -139,7 +143,7 @@ const TranslatePage: React.FC = () => {
         if (storedModel) setSelectedModel(storedModel);
         if (storedHistory) setTranslationHistory(storedHistory);
 
-        if (storedCollections && storedCollections.length > 0) {
+        if (storedCollections && storedCollections?.length > 0) {
           setCollections(storedCollections);
           setSelectedCollectionId(storedCollections[0].id);
           setMappingTable(storedCollections[0].mappingTable);
@@ -186,7 +190,7 @@ const TranslatePage: React.FC = () => {
   ): MappingEntry[] | RelationshipEntry[] => {
     try {
       const lines = markdown.trim().split("\n");
-      if (lines.length < 3) return []; // Need at least header, separator, and one data row
+      if (lines?.length < 3) return []; // Need at least header, separator, and one data row
 
       // Skip header (first line) and separator (second line)
       const dataRows = lines.slice(2);
@@ -199,15 +203,15 @@ const TranslatePage: React.FC = () => {
             .split("|")
             .filter(
               (cell, index, array) =>
-                (index !== 0 && index !== array.length - 1) ||
+                (index !== 0 && index !== array?.length - 1) ||
                 cell.trim() !== ""
             )
             .map((cell) => cell.trim());
 
-          if (cells.length < 5) {
+          if (cells?.length < 5) {
             console.warn("Row has fewer than expected columns:", row);
             // Fill missing cells with empty strings
-            while (cells.length < 5) cells.push("");
+            while (cells?.length < 5) cells.push("");
           }
 
           return {
@@ -226,15 +230,15 @@ const TranslatePage: React.FC = () => {
             .split("|")
             .filter(
               (cell, index, array) =>
-                (index !== 0 && index !== array.length - 1) ||
+                (index !== 0 && index !== array?.length - 1) ||
                 cell.trim() !== ""
             )
             .map((cell) => cell.trim());
 
-          if (cells.length < 6) {
+          if (cells?.length < 6) {
             console.warn("Row has fewer than expected columns:", row);
             // Fill missing cells with empty strings
-            while (cells.length < 6) cells.push("");
+            while (cells?.length < 6) cells.push("");
           }
 
           return {
@@ -258,7 +262,7 @@ const TranslatePage: React.FC = () => {
     data: MappingEntry[] | RelationshipEntry[],
     isMapping: boolean
   ): string => {
-    if (data.length === 0) return "";
+    if (data?.length === 0) return "";
 
     let markdown = "";
 
@@ -307,7 +311,7 @@ const TranslatePage: React.FC = () => {
       }
 
       const lines = markdown.trim().split("\n");
-      if (lines.length < 3) {
+      if (lines?.length < 3) {
         toast.error(
           "Table must contain at least 3 lines (header, separator, and data row)"
         );
@@ -330,7 +334,7 @@ const TranslatePage: React.FC = () => {
       }
 
       const parsed = parseMarkdownTable(markdown, isMapping);
-      if (parsed.length === 0) {
+      if (parsed?.length === 0) {
         toast.error("No valid data rows found in the table");
         setError(`Import failed: No valid data rows found in the table`);
         return;
@@ -498,7 +502,7 @@ const TranslatePage: React.FC = () => {
   };
 
   const deleteCollection = (collectionId: string) => {
-    if (collections.length <= 1) {
+    if (collections?.length <= 1) {
       toast.error("You must have at least one collection");
       setError("You must have at least one collection");
       return;
@@ -510,7 +514,7 @@ const TranslatePage: React.FC = () => {
     const updatedCollections = collections.filter((c) => c.id !== collectionId);
 
     // If we're deleting the currently selected collection, select the first available one
-    if (collectionId === selectedCollectionId && updatedCollections.length > 0) {
+    if (collectionId === selectedCollectionId && updatedCollections?.length > 0) {
       const newSelectedCollection = updatedCollections[0];
       setSelectedCollectionId(newSelectedCollection.id);
       setMappingTable(newSelectedCollection.mappingTable);
@@ -706,73 +710,16 @@ const TranslatePage: React.FC = () => {
   };
 
   // Add entry to mapping table
-  const addMappingEntry = () => {
-    const newEntry: MappingEntry = {
-      term: "",
-      transcription: "",
-      type: "",
-      gender: "",
-      notes: "",
-    };
-
-    const updatedTable = [...mappingTable, newEntry];
-    setMappingTable(updatedTable);
-    saveTableToCurrentCollection(true, updatedTable);
-  };
 
   // Update mapping entry
-  const updateMappingEntry = (
-    index: number,
-    field: keyof MappingEntry,
-    value: string
-  ) => {
-    const updatedTable = [...mappingTable];
-    updatedTable[index] = { ...updatedTable[index], [field]: value };
-    setMappingTable(updatedTable);
-    saveTableToCurrentCollection(true, updatedTable);
-  };
 
   // Remove mapping entry
-  const removeMappingEntry = (index: number) => {
-    const updatedTable = mappingTable.filter((_, i) => i !== index);
-    setMappingTable(updatedTable);
-    saveTableToCurrentCollection(true, updatedTable);
-  };
 
   // Add entry to relationships table
-  const addRelationshipEntry = () => {
-    const newEntry: RelationshipEntry = {
-      characterA: "",
-      characterB: "",
-      relationship: "",
-      addressTermsAToB: "",
-      addressTermsBToA: "",
-      notes: "",
-    };
-
-    const updatedTable = [...relationshipsTable, newEntry];
-    setRelationshipsTable(updatedTable);
-    saveTableToCurrentCollection(false, updatedTable);
-  };
 
   // Update relationship entry
-  const updateRelationshipEntry = (
-    index: number,
-    field: keyof RelationshipEntry,
-    value: string
-  ) => {
-    const updatedTable = [...relationshipsTable];
-    updatedTable[index] = { ...updatedTable[index], [field]: value };
-    setRelationshipsTable(updatedTable);
-    saveTableToCurrentCollection(false, updatedTable);
-  };
 
   // Remove relationship entry
-  const removeRelationshipEntry = (index: number) => {
-    const updatedTable = relationshipsTable.filter((_, i) => i !== index);
-    setRelationshipsTable(updatedTable);
-    saveTableToCurrentCollection(false, updatedTable);
-  };
 
   // Handle scroll event to show/hide scroll button
   useEffect(() => {
@@ -957,7 +904,7 @@ const TranslatePage: React.FC = () => {
 
     // Show notification about pending update
     toast.info('New table update available for review', {
-      description: `${added.length} new entries and ${updated.length} updated entries`,
+      description: `${added?.length} new entries and ${updated?.length} updated entries`,
       action: {
         label: "Review",
         onClick: () => setShowTableUpdates(true)
@@ -965,6 +912,38 @@ const TranslatePage: React.FC = () => {
     });
   };
 
+  // Reapply a past update entry directly into its table (mapping or relationships)
+  const handleReapplyUpdate = async (entry: TableUpdateEntry) => {
+    try {
+      if (entry.type === 'mapping') {
+        const newMap = [...mappingTable];
+        entry.updates.added.forEach(e => newMap.push(e as MappingEntry));
+        entry.updates.updated.forEach(e => {
+          const idx = newMap.findIndex(item => item.term === (e as MappingEntry).term);
+          if (idx >= 0) newMap[idx] = e as MappingEntry;
+        });
+        setMappingTable(newMap);
+        await saveTableToCurrentCollection(true, newMap);
+      } else {
+        const newRel = [...relationshipsTable];
+        entry.updates.added.forEach(e => newRel.push(e as RelationshipEntry));
+        entry.updates.updated.forEach(e => {
+          const idx = newRel.findIndex(item =>
+            item.characterA === (e as RelationshipEntry).characterA &&
+            item.characterB === (e as RelationshipEntry).characterB
+          );
+          if (idx >= 0) newRel[idx] = e as RelationshipEntry;
+        });
+        setRelationshipsTable(newRel);
+        await saveTableToCurrentCollection(false, newRel);
+      }
+    } catch (error) {
+      console.error('Error reapplying update:', error);
+      toast.error('Failed to reapply update');
+    }
+  };
+
+  // Handle update confirmation (approve/reject)
   const handleUpdateConfirmation = async (updateEntry: TableUpdateEntry, approve: boolean) => {
     try {
       // First update the tables if approved
@@ -1021,7 +1000,14 @@ const TranslatePage: React.FC = () => {
       await saveDataToDB("translationCollections", updatedCollections);
 
       // Remove from pending updates
-      setPendingTableUpdates(prev => prev.filter(entry => entry.id !== updateEntry.id));
+      setPendingTableUpdates(prev => {
+        const newPending = prev.filter(entry => entry.id !== updateEntry.id);
+        // If no more pending updates, close the updates panel
+        if (newPending?.length === 0) {
+          setShowTableUpdates(false);
+        }
+        return newPending;
+      });
 
       // Close the confirmation dialog
       setShowUpdateConfirmation(false);
@@ -1029,11 +1015,6 @@ const TranslatePage: React.FC = () => {
 
       // Show success message
       toast.success(`Table update ${approve ? 'approved' : 'rejected'} successfully`);
-
-      // If no more pending updates, close the updates panel
-      if (pendingTableUpdates.length <= 1) {
-        setShowTableUpdates(false);
-      }
     } catch (error) {
       console.error('Error handling update confirmation:', error);
       toast.error(`Failed to ${approve ? 'approve' : 'reject'} update`);
@@ -1041,7 +1022,7 @@ const TranslatePage: React.FC = () => {
   };
 
   useEffect(() => {
-    if (collections.length === 0) {
+    if (collections?.length === 0) {
       setSelectedCollectionId("");
       setMappingTable([]);
       setRelationshipsTable([]);
@@ -1057,6 +1038,105 @@ const TranslatePage: React.FC = () => {
     }
   }, [collections, selectedCollectionId]);
 
+  // Helper to remove a single history entry
+  const removeHistoryEntry = async (entryId: string) => {
+    const updated = translationHistory.filter(e => e.id !== entryId);
+    setTranslationHistory(updated);
+    await saveDataToDB('translationHistory', updated);
+  };
+
+  // ===== Collection-scoped table editing handlers =====
+  const updateMappingEntryInCollection = async (index: number, field: keyof MappingEntry, value: string) => {
+    if (!collectionToEdit) return;
+    const updatedCollections = collections.map(c => {
+      if (c.id === collectionToEdit) {
+        const newMap = c.mappingTable.map((e, i) => i === index ? { ...e, [field]: value } : e);
+        return { ...c, mappingTable: newMap };
+      }
+      return c;
+    });
+    setCollections(updatedCollections);
+    await saveDataToDB('translationCollections', updatedCollections);
+    if (selectedCollectionId === collectionToEdit) {
+      setMappingTable(updatedCollections.find(c => c.id === collectionToEdit)!.mappingTable);
+    }
+  };
+  const removeMappingEntryInCollection = async (index: number) => {
+    if (!collectionToEdit) return;
+    const updatedCollections = collections.map(c => {
+      if (c.id === collectionToEdit) {
+        const newMap = c.mappingTable.filter((_, i) => i !== index);
+        return { ...c, mappingTable: newMap };
+      }
+      return c;
+    });
+    setCollections(updatedCollections);
+    await saveDataToDB('translationCollections', updatedCollections);
+    if (selectedCollectionId === collectionToEdit) {
+      setMappingTable(updatedCollections.find(c => c.id === collectionToEdit)!.mappingTable);
+    }
+  };
+  const addMappingEntryInCollection = async () => {
+    if (!collectionToEdit) return;
+    const newEntry: MappingEntry = { term: '', transcription: '', type: '', gender: '', notes: '' };
+    const updatedCollections = collections.map(c => {
+      if (c.id === collectionToEdit) {
+        return { ...c, mappingTable: [...c.mappingTable, newEntry] };
+      }
+      return c;
+    });
+    setCollections(updatedCollections);
+    await saveDataToDB('translationCollections', updatedCollections);
+    if (selectedCollectionId === collectionToEdit) {
+      setMappingTable(updatedCollections.find(c => c.id === collectionToEdit)!.mappingTable);
+    }
+  };
+  const updateRelationshipEntryInCollection = async (index: number, field: keyof RelationshipEntry, value: string) => {
+    if (!collectionToEdit) return;
+    const updatedCollections = collections.map(c => {
+      if (c.id === collectionToEdit) {
+        const newRel = c.relationshipsTable.map((e, i) => i === index ? { ...e, [field]: value } : e);
+        return { ...c, relationshipsTable: newRel };
+      }
+      return c;
+    });
+    setCollections(updatedCollections);
+    await saveDataToDB('translationCollections', updatedCollections);
+    if (selectedCollectionId === collectionToEdit) {
+      setRelationshipsTable(updatedCollections.find(c => c.id === collectionToEdit)!.relationshipsTable);
+    }
+  };
+  const removeRelationshipEntryInCollection = async (index: number) => {
+    if (!collectionToEdit) return;
+    const updatedCollections = collections.map(c => {
+      if (c.id === collectionToEdit) {
+        const newRel = c.relationshipsTable.filter((_, i) => i !== index);
+        return { ...c, relationshipsTable: newRel };
+      }
+      return c;
+    });
+    setCollections(updatedCollections);
+    await saveDataToDB('translationCollections', updatedCollections);
+    if (selectedCollectionId === collectionToEdit) {
+      setRelationshipsTable(updatedCollections.find(c => c.id === collectionToEdit)!.relationshipsTable);
+    }
+  };
+  const addRelationshipEntryInCollection = async () => {
+    if (!collectionToEdit) return;
+    const newRel: RelationshipEntry = { characterA: '', characterB: '', relationship: '', addressTermsAToB: '', addressTermsBToA: '', notes: '' };
+    const updatedCollections = collections.map(c => {
+      if (c.id === collectionToEdit) {
+        return { ...c, relationshipsTable: [...c.relationshipsTable, newRel] };
+      }
+      return c;
+    });
+    setCollections(updatedCollections);
+    await saveDataToDB('translationCollections', updatedCollections);
+    if (selectedCollectionId === collectionToEdit) {
+      setRelationshipsTable(updatedCollections.find(c => c.id === collectionToEdit)!.relationshipsTable);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 flex flex-col gap-6 pb-10 relative">
       {/* Invisible element at the top for scrollIntoView */}
@@ -1067,14 +1147,6 @@ const TranslatePage: React.FC = () => {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => setShowHistory(!showHistory)}
-            aria-label="Show translation history"
-          >
-            <History className="h-5 w-5 mr-2" />
-            History
-          </Button>
-          <Button
-            variant="outline"
             onClick={clearText}
             aria-label="Clear all text"
           >
@@ -1083,15 +1155,6 @@ const TranslatePage: React.FC = () => {
           </Button>
         </div>
       </div>
-
-      {/* Translation History Panel */}
-      <TranslationHistory
-        show={showHistory}
-        history={translationHistory}
-        onClear={clearHistory}
-        onUseAgain={createNewFromHistory}
-        arcrylicBg={arcrylicBg}
-      />
 
       {/* Main translation area */}
       <TranslationInputOutput
@@ -1112,118 +1175,58 @@ const TranslatePage: React.FC = () => {
         isCollectionManagementVisible={isCollectionManagementVisible}
         onToggleCollectionManagement={toggleCollectionManagement}
         arcrylicBg={arcrylicBg}
+        modelDescriptions={modelDescriptions}
       />
 
-      {/* Mapping & Relationships Tables Panel */}
-      <Card className={cn("p-6", arcrylicBg && "arcrylic-blur")}>
-        {/* Collection Management Section - Only visible when toggled */}
-        <CollectionManager
-          isVisible={isCollectionManagementVisible}
-          settingsPanelRef={settingsPanelRef as React.RefObject<HTMLDivElement>}
-          collections={collections}
-          collectionToEdit={collectionToEdit}
-          setCollectionToEdit={setCollectionToEdit}
-          editedCollectionName={editedCollectionName}
-          setEditedCollectionName={setEditedCollectionName}
-          addNewCollection={addNewCollection}
-          useCollection={useCollection}
-          renameCollection={renameCollection}
-          requestDeleteCollection={requestDeleteCollection}
-          showDeleteConfirmation={showDeleteConfirmation}
-          setShowDeleteConfirmation={setShowDeleteConfirmation}
-          confirmDeleteCollection={confirmDeleteCollection}
-          collectionToDelete={collectionToDelete}
-          selectedCollectionId={selectedCollectionId}
-          error={error}
-          setError={setError}
-          arcrylicBg={arcrylicBg}
-        />
-
-        <Tabs
-          defaultValue={activeTab}
-          onValueChange={(value) => {
-            setActiveTab(value);
-            // Update markdown when switching tabs if import area is open
-            if (showImportArea) {
-              if (value === "mapping") {
-                setMappingMarkdown(generateMarkdownTable(mappingTable, true));
-              } else {
-                setRelationshipsMarkdown(
-                  generateMarkdownTable(relationshipsTable, false)
-                );
-              }
-            }
-          }}
-          className="w-full"
-        >
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-            <h2 className="text-xl sm:text-2xl font-bold">
-              Translation Mapping Tables
-              {selectedCollectionId && (
-                <span className="text-base sm:text-lg font-medium ml-2 text-muted-foreground">
-                  -{" "}
-                  {collections.find((c) => c.id === selectedCollectionId)
-                    ?.name || ""}
-                </span>
-              )}
-            </h2>
-            <TabsList className="w-full sm:w-auto mt-2 sm:mt-0">
-              <TabsTrigger
-                value="mapping"
-                className="text-xs sm:text-sm px-2 sm:px-4 flex-1 sm:flex-initial"
-              >
-                Mapping Table
-              </TabsTrigger>
-              <TabsTrigger
-                value="relationships"
-                className="text-xs sm:text-sm px-2 sm:px-4 flex-1 sm:flex-initial"
-              >
-                Relationships Table
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          {/* Mapping Table */}
-          <TabsContent value="mapping" className="mt-4">
-            <MappingTable
-              mappingTable={mappingTable}
-              updateMappingEntry={updateMappingEntry}
-              removeMappingEntry={removeMappingEntry}
-              addMappingEntry={addMappingEntry}
-              showImportArea={showImportArea}
-              toggleImportArea={toggleImportArea}
-              mappingMarkdown={mappingMarkdown}
-              setMappingMarkdown={setMappingMarkdown}
-              revertImport={() => revertImport(true)}
-              showRevertButton={showRevertButton}
-              exportMarkdownTable={() => exportMarkdownTable(true)}
-              importMarkdownTable={() => importMarkdownTable(mappingMarkdown, true)}
-              error={error}
-              arcrylicBg={arcrylicBg}
-            />
-          </TabsContent>
-
-          {/* Relationships Table */}
-          <TabsContent value="relationships" className="mt-4">
-            <RelationshipsTable
-              relationshipsTable={relationshipsTable}
-              updateRelationshipEntry={updateRelationshipEntry}
-              removeRelationshipEntry={removeRelationshipEntry}
-              addRelationshipEntry={addRelationshipEntry}
-              showImportArea={showImportArea}
-              toggleImportArea={toggleImportArea}
-              relationshipsMarkdown={relationshipsMarkdown}
-              setRelationshipsMarkdown={setRelationshipsMarkdown}
-              revertImport={() => revertImport(false)}
-              showRevertButton={showRevertButton}
-              exportMarkdownTable={() => exportMarkdownTable(false)}
-              importMarkdownTable={() => importMarkdownTable(relationshipsMarkdown, false)}
-              error={error}
-              arcrylicBg={arcrylicBg}
-            />
-          </TabsContent>
-        </Tabs>
-      </Card>
+      {/* Collection Management & Collection‑Scoped Views */}
+      <CollectionManager
+        isVisible={isCollectionManagementVisible}
+        settingsPanelRef={settingsPanelRef as React.RefObject<HTMLDivElement>}
+        collections={collections}
+        collectionToEdit={collectionToEdit}
+        setCollectionToEdit={setCollectionToEdit}
+        editedCollectionName={editedCollectionName}
+        setEditedCollectionName={setEditedCollectionName}
+        addNewCollection={addNewCollection}
+        useCollection={useCollection}
+        renameCollection={renameCollection}
+        requestDeleteCollection={requestDeleteCollection}
+        showDeleteConfirmation={showDeleteConfirmation}
+        setShowDeleteConfirmation={setShowDeleteConfirmation}
+        confirmDeleteCollection={confirmDeleteCollection}
+        selectedCollectionId={selectedCollectionId}
+        error={error}
+        setError={setError}
+        arcrylicBg={arcrylicBg}
+        translationHistory={translationHistory}
+        onClearHistory={clearHistory}
+        onUseHistoryEntry={createNewFromHistory}
+        onRemoveHistoryEntry={removeHistoryEntry}
+        updateMappingEntry={updateMappingEntryInCollection}
+        removeMappingEntry={removeMappingEntryInCollection}
+        addMappingEntry={addMappingEntryInCollection}
+        showMappingImportArea={showImportArea}
+        toggleMappingImportArea={toggleImportArea}
+        mappingMarkdown={mappingMarkdown}
+        setMappingMarkdown={setMappingMarkdown}
+        revertMappingImport={() => revertImport(true)}
+        showMappingRevertButton={showRevertButton}
+        exportMappingMarkdown={() => exportMarkdownTable(true)}
+        importMappingMarkdown={() => importMarkdownTable(mappingMarkdown, true)}
+        updateRelationshipEntry={updateRelationshipEntryInCollection}
+        removeRelationshipEntry={removeRelationshipEntryInCollection}
+        addRelationshipEntry={addRelationshipEntryInCollection}
+        showRelationshipImportArea={showImportArea}
+        toggleRelationshipImportArea={toggleImportArea}
+        relationshipsMarkdown={relationshipsMarkdown}
+        setRelationshipsMarkdown={setRelationshipsMarkdown}
+        revertRelationshipImport={() => revertImport(false)}
+        showRelationshipRevertButton={showRevertButton}
+        exportRelationshipMarkdown={() => exportMarkdownTable(false)}
+        importRelationshipMarkdown={() => importMarkdownTable(relationshipsMarkdown, false)}
+        onApproveUpdate={handleReapplyUpdate}
+        onRejectUpdate={(entry: TableUpdateEntry) => handleUpdateConfirmation(entry, false)}
+      />
 
       {/* Scroll to top button */}
       <Button

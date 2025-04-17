@@ -236,7 +236,7 @@ function processResponse(
   console.log('Processing Gemini response:', response);
 
   // Handle structured response
-  if (!response.candidates || response.candidates.length === 0) {
+  if (!response.candidates || response.candidates?.length === 0) {
     console.log('No candidates found in response');
     return {
       thinking: "No response generated.",

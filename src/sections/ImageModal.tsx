@@ -141,11 +141,10 @@ const ImageModal: React.FC<ImageModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 flex-1 overflow-hidden h-full min-h-0">
                   <div className="relative flex-1 min-h-0 h-[35vh] md:h-[70vh] overflow-auto">
                     <div
-                      className={`w-full h-auto object-contain ${
-                        active.isProcessing || active.willProcess
-                          ? "blur-xs"
-                          : ""
-                      }`}
+                      className={`w-full h-auto object-contain ${active.isProcessing || active.willProcess
+                        ? "blur-xs"
+                        : ""
+                        }`}
                     >
                       <motion.div
                         layoutId={`image-${active.id}-${id}`}
@@ -185,7 +184,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
                       </div>
                     )}
                   </div>
-                  <div className="relative flex-1 min-h-0 h-[35vh] md:h-[70vh] overflow-auto">
+                  <div className="relative flex-1 min-h-0 h-[35vh] md:h-[70vh] overflow-auto p-4">
                     <div className="flex justify-between items-center mb-2">
                       <h4 className="font-medium text-base md:text-lg">
                         Gemini OCR Result
@@ -243,8 +242,8 @@ const ImageModal: React.FC<ImageModalProps> = ({
                               {active.isProcessing
                                 ? "Processing..."
                                 : active.willProcess
-                                ? "Waiting in queue..."
-                                : active.geminiResponse.ocrText}
+                                  ? "Waiting in queue..."
+                                  : active.geminiResponse.ocrText}
                             </ScrollArea>
                           </TabsContent>
                           <TabsContent
@@ -255,8 +254,8 @@ const ImageModal: React.FC<ImageModalProps> = ({
                               {active.isProcessing
                                 ? "Processing..."
                                 : active.willProcess
-                                ? "Waiting in queue..."
-                                : active.geminiResponse.thinking}
+                                  ? "Waiting in queue..."
+                                  : active.geminiResponse.thinking}
                             </ScrollArea>
                           </TabsContent>
                         </div>

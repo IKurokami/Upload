@@ -8,8 +8,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Plus, Trash2, Pencil, Folder, CheckCircle2, XCircle } from "lucide-react";
+import { Plus, Trash2, Pencil, Folder, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import TranslationHistory from "@/components/translate/TranslationHistory";
+import MappingTable from "@/components/translate/MappingTable";
+import RelationshipsTable from "@/components/translate/RelationshipsTable";
+import { MappingEntry, RelationshipEntry, TranslationHistoryEntry, TableUpdateEntry } from "@/types/translateTypes";
 
 // NOTE: Keep this in sync with the Collection type in TranslatePage and types/translateTypes.ts
 interface Collection {
@@ -35,11 +40,38 @@ interface CollectionManagerProps {
   showDeleteConfirmation: boolean;
   setShowDeleteConfirmation: (show: boolean) => void;
   confirmDeleteCollection: () => void;
-  collectionToDelete: string;
   selectedCollectionId: string;
   error: string | null;
   setError: (err: string | null) => void;
   arcrylicBg?: boolean;
+  translationHistory: TranslationHistoryEntry[];
+  onClearHistory: () => void;
+  onUseHistoryEntry: (entry: TranslationHistoryEntry) => void;
+  onRemoveHistoryEntry: (entryId: string) => void;
+  updateMappingEntry: (index: number, field: keyof MappingEntry, value: string) => void;
+  removeMappingEntry: (index: number) => void;
+  addMappingEntry: () => void;
+  showMappingImportArea: boolean;
+  toggleMappingImportArea: () => void;
+  mappingMarkdown: string;
+  setMappingMarkdown: (markdown: string) => void;
+  revertMappingImport: () => void;
+  showMappingRevertButton: boolean;
+  exportMappingMarkdown: () => void;
+  importMappingMarkdown: () => void;
+  updateRelationshipEntry: (index: number, field: keyof RelationshipEntry, value: string) => void;
+  removeRelationshipEntry: (index: number) => void;
+  addRelationshipEntry: () => void;
+  showRelationshipImportArea: boolean;
+  toggleRelationshipImportArea: () => void;
+  relationshipsMarkdown: string;
+  setRelationshipsMarkdown: (markdown: string) => void;
+  revertRelationshipImport: () => void;
+  showRelationshipRevertButton: boolean;
+  exportRelationshipMarkdown: () => void;
+  importRelationshipMarkdown: () => void;
+  onApproveUpdate: (entry: TableUpdateEntry) => void;
+  onRejectUpdate: (entry: TableUpdateEntry) => void;
 }
 
 const CollectionManager: React.FC<CollectionManagerProps> = ({
@@ -61,6 +93,34 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({
   error,
   setError,
   arcrylicBg,
+  translationHistory,
+  onClearHistory,
+  onUseHistoryEntry,
+  onRemoveHistoryEntry,
+  updateMappingEntry,
+  removeMappingEntry,
+  addMappingEntry,
+  showMappingImportArea,
+  toggleMappingImportArea,
+  mappingMarkdown,
+  setMappingMarkdown,
+  revertMappingImport,
+  showMappingRevertButton,
+  exportMappingMarkdown,
+  importMappingMarkdown,
+  updateRelationshipEntry,
+  removeRelationshipEntry,
+  addRelationshipEntry,
+  showRelationshipImportArea,
+  toggleRelationshipImportArea,
+  relationshipsMarkdown,
+  setRelationshipsMarkdown,
+  revertRelationshipImport,
+  showRelationshipRevertButton,
+  exportRelationshipMarkdown,
+  importRelationshipMarkdown,
+  onApproveUpdate,
+  onRejectUpdate,
 }) => {
   // Find the collection being edited
   const editingCollection = collections.find((c) => c.id === collectionToEdit);
@@ -70,12 +130,24 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({
   const [inlineAddName, setInlineAddName] = useState("");
   const inlineAddInputRef = useRef<HTMLInputElement>(null);
 
+  // State for inline editing in sidebar
+  const [inlineEditId, setInlineEditId] = useState<string | null>(null);
+  const [inlineEditName, setInlineEditName] = useState("");
+  const inlineEditInputRef = useRef<HTMLInputElement>(null);
+
   // Focus input when shown
   React.useEffect(() => {
     if (showInlineAdd && inlineAddInputRef.current) {
       inlineAddInputRef.current.focus();
     }
   }, [showInlineAdd]);
+
+  // Focus input when edit mode is activated
+  React.useEffect(() => {
+    if (inlineEditId && inlineEditInputRef.current) {
+      inlineEditInputRef.current.focus();
+    }
+  }, [inlineEditId]);
 
   // Helper to add collection and reset
   const handleAddInlineCollection = () => {
@@ -89,13 +161,25 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({
     }
   };
 
+  // Handle saving the inline edit
+  const handleInlineEditSave = () => {
+    if (inlineEditId && inlineEditName.trim()) {
+      setEditedCollectionName(inlineEditName);
+      setCollectionToEdit(inlineEditId);
+      renameCollection();
+      setInlineEditId(null);
+    } else {
+      setInlineEditId(null);
+    }
+  };
+
   return (
     <div
       ref={settingsPanelRef}
       className={cn(
         "overflow-hidden transition-all duration-300 ease-in-out",
         isVisible
-          ? "h-[480px] sm:h-[400px] opacity-100 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700"
+          ? "h-auto sm:h-[800px] opacity-100 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700"
           : "h-0 opacity-0 mb-0 pb-0 border-b-0"
       )}
       tabIndex={-1}
@@ -105,9 +189,9 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({
         arcrylicBg && "backdrop-blur-md"
       )}>
         {/* Sidebar: Collection List */}
-        <aside className="w-full sm:w-1/3 bg-muted/40 dark:bg-muted/20 p-4 flex flex-col gap-2 border-r border-gray-200 dark:border-gray-800 min-h-[320px]">
+        <aside className="w-full sm:w-1/3 bg-muted/40 dark:bg-muted/20 p-3 sm:p-4 flex flex-col gap-2 border-b sm:border-b-0 sm:border-r border-gray-200 dark:border-gray-800 min-h-[200px] sm:min-h-[320px] max-h-[220px] sm:max-h-none overflow-x-auto overflow-y-auto">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Folder className="h-5 w-5 text-primary" />
               Collections
             </h3>
@@ -167,11 +251,83 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({
                 }}
               >
                 <Folder className="h-4 w-4 mr-1 text-primary/70" />
-                <span className="flex-1 truncate font-medium">{collection.name}</span>
-                {collection.id === selectedCollectionId && (
-                  <CheckCircle2 className="h-4 w-4 text-green-500 ml-1" />
+
+                {inlineEditId === collection.id ? (
+                  <Input
+                    ref={inlineEditInputRef}
+                    value={editedCollectionName}
+                    onChange={(e) => setEditedCollectionName(e.target.value)}
+                    onBlur={handleInlineEditSave}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleInlineEditSave();
+                      } else if (e.key === "Escape") {
+                        setInlineEditId(null);
+                      }
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex-1 h-8 text-sm"
+                    autoFocus
+                  />
+                ) : (
+                  <div className="flex flex-1 items-center min-w-0">
+                    <span className="flex-1 truncate font-medium text-sm sm:text-base">{collection.name}</span>
+                    <Pencil
+                      className="h-4 w-4 ml-2 opacity-0 group-hover:opacity-100 text-gray-500 hover:text-primary transition-opacity cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCollectionToEdit(collection.id);
+                        setEditedCollectionName(collection.name);
+                        setInlineEditId(collection.id);
+                        setInlineEditName(collection.name);
+                      }}
+                    />
+                  </div>
                 )}
-                {collection.id === collectionToEdit && (
+
+                {collection.id === selectedCollectionId ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-500 ml-1" />
+                ) : (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            useCollection(collection.id);
+                          }}
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                          aria-label="Use this collection"
+                        >
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Use this collection</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          requestDeleteCollection(collection.id);
+                        }}
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500"
+                        aria-label="Delete collection"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Delete collection</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                {collection.id === collectionToEdit && inlineEditId !== collection.id && (
                   <span className="ml-2 text-xs font-semibold">Editing</span>
                 )}
               </div>
@@ -179,105 +335,147 @@ const CollectionManager: React.FC<CollectionManagerProps> = ({
           </div>
         </aside>
 
-        {/* Main: Collection Details & Actions */}
-        <section className="flex-1 p-6 flex flex-col gap-6">
-          {/* Edit/Rename/Delete Collection */}
-          {collectionToEdit && editingCollection && (
-            <div className="flex flex-col gap-4 max-w-lg mx-auto w-full">
-              <div className="flex items-center gap-3 mb-2">
-                <Folder className="h-6 w-6 text-primary/80" />
-                <h4 className="text-xl font-bold flex-1 truncate">{editingCollection.name}</h4>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        onClick={() => setEditedCollectionName(editingCollection.name)}
-                        aria-label="Rename collection"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Rename</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        onClick={() => {
-                          if (collections.length > 1) {
-                            requestDeleteCollection(collectionToEdit);
-                          } else {
-                            setError("You must have at least one collection");
-                          }
-                        }}
-                        disabled={collections.length <= 1}
-                        aria-label="Delete collection"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Delete</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              {/* Rename input */}
-              <div className="flex gap-2">
-                <Input
-                  value={editedCollectionName}
-                  onChange={(e) => setEditedCollectionName(e.target.value)}
-                  placeholder="Rename collection"
-                  className="flex-1"
+        {/* Main: Collection Details & Tabs */}
+        <section className="flex-1 min-w-0 p-3 sm:p-6 flex flex-col h-full">
+          <Tabs defaultValue="history" className="h-full flex flex-col">
+            <TabsList className="mb-4">
+              <TabsTrigger value="history">History</TabsTrigger>
+              <TabsTrigger value="mapping">Mapping</TabsTrigger>
+              <TabsTrigger value="relationships">Relationships</TabsTrigger>
+              <TabsTrigger value="updates">Updates</TabsTrigger>
+            </TabsList>
+            <TabsContent value="history" className="flex-1 overflow-auto">
+              {editingCollection && (
+                <TranslationHistory
+                  show={true}
+                  history={translationHistory.filter(h => h.collectionId === editingCollection.id)}
+                  collections={collections}
+                  selectedCollectionId={editingCollection.id}
+                  onSelectCollection={setCollectionToEdit}
+                  onClear={onClearHistory}
+                  onUseAgain={onUseHistoryEntry}
+                  arcrylicBg={arcrylicBg}
+                  onRemoveEntry={onRemoveHistoryEntry}
+                  hideCollectionSelector={true}
                 />
-                <Button
-                  variant="secondary"
-                  onClick={renameCollection}
-                  disabled={!editedCollectionName.trim()}
-                >
-                  Save
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setCollectionToEdit("")}
-                >
-                  Cancel
-                </Button>
-              </div>
-              <div className="flex gap-2 mt-2">
-                <Button
-                  variant="default"
-                  onClick={() => useCollection(collectionToEdit)}
-                  className="flex-1"
-                >
-                  Use This Collection
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="text-red-500 text-sm mt-2 font-medium flex items-center gap-2">
-              <XCircle className="h-4 w-4" />
-              {error}
-            </div>
-          )}
+              )}
+            </TabsContent>
+            <TabsContent value="mapping" className="flex-1 overflow-auto">
+              {editingCollection && (
+                <MappingTable
+                  mappingTable={editingCollection.mappingTable}
+                  updateMappingEntry={updateMappingEntry}
+                  removeMappingEntry={removeMappingEntry}
+                  addMappingEntry={addMappingEntry}
+                  showImportArea={showMappingImportArea}
+                  toggleImportArea={toggleMappingImportArea}
+                  mappingMarkdown={mappingMarkdown}
+                  setMappingMarkdown={setMappingMarkdown}
+                  revertImport={revertMappingImport}
+                  showRevertButton={showMappingRevertButton}
+                  exportMarkdownTable={exportMappingMarkdown}
+                  importMarkdownTable={importMappingMarkdown}
+                  error={error}
+                  arcrylicBg={arcrylicBg}
+                />
+              )}
+            </TabsContent>
+            <TabsContent value="relationships" className="flex-1 overflow-auto">
+              {editingCollection && (
+                <RelationshipsTable
+                  relationshipsTable={editingCollection.relationshipsTable}
+                  updateRelationshipEntry={updateRelationshipEntry}
+                  removeRelationshipEntry={removeRelationshipEntry}
+                  addRelationshipEntry={addRelationshipEntry}
+                  showImportArea={showRelationshipImportArea}
+                  toggleImportArea={toggleRelationshipImportArea}
+                  relationshipsMarkdown={relationshipsMarkdown}
+                  setRelationshipsMarkdown={setRelationshipsMarkdown}
+                  revertImport={revertRelationshipImport}
+                  showRevertButton={showRelationshipRevertButton}
+                  exportMarkdownTable={exportRelationshipMarkdown}
+                  importMarkdownTable={importRelationshipMarkdown}
+                  error={error}
+                  arcrylicBg={arcrylicBg}
+                />
+              )}
+            </TabsContent>
+            <TabsContent value="updates" className="flex-1 overflow-auto">
+              {editingCollection?.tableUpdateHistory?.length ? (
+                editingCollection.tableUpdateHistory.map(entry => (
+                  <Card key={entry.id} className="mb-4">
+                    <div className="p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-medium">Update on {new Date(entry.timestamp).toLocaleString()}</span>
+                        <span className={`px-2 py-1 rounded text-sm ${entry.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          entry.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>{entry.status}</span>
+                      </div>
+                      {entry.updates.added && entry.updates.added?.length > 0 && (
+                        <div className="mb-2">
+                          <strong>Added:</strong>
+                          <ul className="list-disc list-inside">
+                            {entry.updates.added.map((e: MappingEntry | RelationshipEntry, i: number) => (
+                              <li key={i}>{entry.type === 'mapping' ? (e as MappingEntry).term : `${(e as RelationshipEntry).characterA}–${(e as RelationshipEntry).characterB}`}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {entry.updates.updated && entry.updates.updated?.length > 0 && (
+                        <div className="mb-2">
+                          <strong>Updated:</strong>
+                          <ul className="list-disc list-inside">
+                            {entry.updates.updated.map((e: MappingEntry | RelationshipEntry, i: number) => (
+                              <li key={i}>{entry.type === 'mapping' ? (e as MappingEntry).term : `${(e as RelationshipEntry).characterA}–${(e as RelationshipEntry).characterB}`}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {entry.status === 'pending' && (
+                        <div className="flex gap-2 pt-2">
+                          <Button variant="outline" size="sm" onClick={() => onRejectUpdate(entry)}>Reject</Button>
+                          <Button variant="default" size="sm" onClick={() => onApproveUpdate(entry)}>Approve</Button>
+                        </div>
+                      )}
+                      {(entry.status === 'approved' || entry.status === 'rejected') && (
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Confirm if this update was previously rejected
+                              if (entry.status === 'rejected' && !window.confirm('This update was previously rejected. Do you want to reapply it?')) {
+                                return;
+                              }
+                              onApproveUpdate(entry);
+                            }}
+                          >
+                            Reapply
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground">No updates</p>
+              )}
+            </TabsContent>
+          </Tabs>
         </section>
 
         {/* Delete Confirmation Modal */}
         {showDeleteConfirmation && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl border border-gray-200 dark:border-zinc-800 animate-fadeIn">
-              <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white flex items-center gap-2">
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-2">
+            <div className="bg-white dark:bg-zinc-900 rounded-2xl p-4 sm:p-8 max-w-xs sm:max-w-md w-full mx-2 shadow-2xl border border-gray-200 dark:border-zinc-800 animate-fadeIn">
+              <h3 className="text-xl sm:text-2xl font-bold mb-3 text-gray-900 dark:text-white flex items-center gap-2">
                 <Trash2 className="h-6 w-6 text-destructive" /> Confirm Deletion
               </h3>
-              <p className="mb-2 text-gray-700 dark:text-gray-300">Are you sure you want to delete this collection?</p>
-              <p className="text-sm text-muted-foreground mb-6">This action cannot be undone.</p>
-              <div className="flex justify-end gap-3">
+              <p className="mb-2 text-gray-700 dark:text-gray-300 text-sm sm:text-base">Are you sure you want to delete this collection?</p>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-6">This action cannot be undone.</p>
+              <div className="flex justify-end gap-3 flex-col sm:flex-row">
                 <Button
                   variant="outline"
                   onClick={() => setShowDeleteConfirmation(false)}

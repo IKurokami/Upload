@@ -84,7 +84,7 @@ export function GlowEffect({
     },
     colorShift: {
       background: colors.map((color, index) => {
-        const nextColor = colors[(index + 1) % colors.length];
+        const nextColor = colors[(index + 1) % colors?.length];
         return `conic-gradient(from 0deg at 50% 50%, ${color} 0%, ${nextColor} 50%, ${color} 100%)`;
       }),
       transition: {
@@ -96,7 +96,7 @@ export function GlowEffect({
     },
     flowHorizontal: {
       background: colors.map((color) => {
-        const nextColor = colors[(colors.indexOf(color) + 1) % colors.length];
+        const nextColor = colors[(colors.indexOf(color) + 1) % colors?.length];
         return `linear-gradient(to right, ${color}, ${nextColor})`;
       }),
       transition: {

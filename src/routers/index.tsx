@@ -3,6 +3,7 @@ import { NotFoundPage } from "@/pages/NotFoundPage";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { Suspense, lazy, useMemo, memo } from "react";
 import { Loader2 } from "lucide-react";
+import { NavAnimationProvider } from "@/contexts/NavAnimationContext";
 
 // Lazy-loaded pages with memoization
 const HomePage = memo(lazy(() => import("../pages/HomePage")));
@@ -26,7 +27,11 @@ TranslatePage.displayName = 'TranslatePage';
 const createAppRouter = () => createBrowserRouter([
   {
     path: "/",
-    element: <MainLayout />,
+    element: (
+      <NavAnimationProvider>
+        <MainLayout />
+      </NavAnimationProvider>
+    ),
     children: [
       { index: true, element: <HomePage /> },
       { path: "Upload", element: <UploadPage /> },
@@ -36,6 +41,24 @@ const createAppRouter = () => createBrowserRouter([
       { path: "translate", element: <TranslatePage /> },
       { path: "settings", element: <SettingsPage /> },
     ],
+  },
+  {
+    path: "/Upload",
+    element: (
+      <NavAnimationProvider>
+        <MainLayout />
+      </NavAnimationProvider>
+    ),
+    children: [
+      { index: true, element: <HomePage /> },
+      { path: "Upload", element: <UploadPage /> },
+      { path: "albums", element: <AlbumsPage /> },
+      { path: "albums/:albumId", element: <AlbumDetailPage /> },
+      { path: "ocr", element: <ExtractTextPage /> },
+      { path: "translate", element: <TranslatePage /> },
+      { path: "settings", element: <SettingsPage /> },
+    ],
+
   },
   {
     path: "*",

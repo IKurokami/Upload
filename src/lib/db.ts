@@ -327,7 +327,7 @@ export const generateHtmlFile = (
   fileName: string
 ): void => {
   const linksHtml =
-    extractedLinks.length > 0
+    extractedLinks?.length > 0
       ? extractedLinks
         .map(
           (link) =>

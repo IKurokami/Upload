@@ -135,7 +135,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({
               {/* Image name label */}
               <span className="absolute top-1 left-1 text-xs text-white bg-black bg-opacity-50 px-1 rounded">
                 {index + 1}.{" "}
-                {img.file.name.length > 15
+                {img.file.name?.length > 15
                   ? `${img.file.name.substring(0, 15)}...`
                   : img.file.name}
               </span>
@@ -209,7 +209,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({
                 borderRadius: 4,
                 zIndex: 1,
               }}>
-                {activeImage.file.name.length > 15
+                {activeImage.file.name?.length > 15
                   ? `${activeImage.file.name.substring(0, 15)}...`
                   : activeImage.file.name}
               </span>

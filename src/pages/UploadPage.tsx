@@ -66,7 +66,7 @@ const UploadPage: React.FC = () => {
       }
 
       // Match direct image links (expanded extensions, allow query/hash after extension)
-      if (links.length === 0) {
+      if (links?.length === 0) {
         const urlRegex =
           /https?:\/\/[^\s'"]+\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|ico|avif|jfif|pjpeg|pjp)(\?[^'"\s]*)?(\#[^'"\s]*)?/gi;
         const directLinks = htmlContent.match(urlRegex) || [];
@@ -86,8 +86,8 @@ const UploadPage: React.FC = () => {
 
   // Track last saved album ID after successful save
   useEffect(() => {
-    if (saveMessage?.type === "success" && savedFiles.length > 0) {
-      const last = savedFiles[savedFiles.length - 1];
+    if (saveMessage?.type === "success" && savedFiles?.length > 0) {
+      const last = savedFiles[savedFiles?.length - 1];
       if (last && typeof last.id === "number") {
         setLastSavedAlbumId(last.id);
       }
@@ -180,7 +180,7 @@ const UploadPage: React.FC = () => {
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            {savedFiles.length} file(s) saved in browser storage.{" "}
+            {savedFiles?.length} file(s) saved in browser storage.{" "}
             <Link to="/albums" className="text-blue-500 hover:underline">
               View Albums
             </Link>

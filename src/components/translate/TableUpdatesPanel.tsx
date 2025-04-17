@@ -77,7 +77,7 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
         <div className="flex items-center space-x-2">
           <CardTitle className="text-base font-medium">Table Updates</CardTitle>
           <Badge variant="outline" className="ml-2 text-xs">
-            {pendingTableUpdates.length}
+            {pendingTableUpdates?.length}
           </Badge>
         </div>
         <Button
@@ -93,7 +93,7 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
       <CardContent className="p-3">
         <ScrollArea className="max-h-[60vh] pr-2 overflow-y-auto">
           <div className="space-y-3">
-            {pendingTableUpdates.length > 0 ? (
+            {pendingTableUpdates?.length > 0 ? (
               pendingTableUpdates.map((update) => (
                 <div key={update.id} className="border rounded-lg overflow-hidden">
                   <div className="bg-muted/30 p-3 flex justify-between items-center">
@@ -157,7 +157,7 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
                   {expandedEntries.has(update.id) && (
                     <div className="p-3 space-y-3 bg-background">
                       {/* Added Entries */}
-                      {update.updates.added.length > 0 && (
+                      {update.updates.added?.length > 0 && (
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-xs font-medium flex items-center">
@@ -165,7 +165,7 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
                               Added Entries
                             </span>
                             <Badge variant="outline" className="text-xs px-1.5 h-5">
-                              {update.updates.added.length}
+                              {update.updates.added?.length}
                             </Badge>
                           </div>
                           <ScrollArea className="h-[120px]">
@@ -194,7 +194,7 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
                       )}
                       
                       {/* Updated Entries */}
-                      {update.updates.updated.length > 0 && (
+                      {update.updates.updated?.length > 0 && (
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-xs font-medium flex items-center">
@@ -202,7 +202,7 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
                               Updated Entries
                             </span>
                             <Badge variant="outline" className="text-xs px-1.5 h-5">
-                              {update.updates.updated.length}
+                              {update.updates.updated?.length}
                             </Badge>
                           </div>
                           <ScrollArea className="h-[120px]">

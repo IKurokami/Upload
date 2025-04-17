@@ -15,6 +15,7 @@ import { ArcrylicBgProvider } from "@/contexts/ArcrylicBgContext";
 import { Toaster } from "sonner";
 import { getDataFromDB } from "@/lib/db";
 import { AnimatePresence, motion } from "framer-motion";
+import { useNavAnimation } from "@/contexts/NavAnimationContext";
 
 const MainLayout = () => {
   const location = useLocation();
@@ -22,6 +23,8 @@ const MainLayout = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [apiKey, setApiKey] = useState<string | null>(null);
+
+  const { setNavBoundingBox } = useNavAnimation();
 
   useEffect(() => {
     const loadApiKey = async () => {
@@ -33,7 +36,7 @@ const MainLayout = () => {
       }
     };
     loadApiKey();
-    
+
     // Add event listener to detect changes in API key
     const handleStorageChange = async (event: StorageEvent) => {
       if (event.key === "apiKey" || event.key === null) {
@@ -41,16 +44,16 @@ const MainLayout = () => {
         setApiKey(updatedKey || null);
       }
     };
-    
+
     // Setup custom event listener for API key changes
     const handleCustomStorageChange = async () => {
       const updatedKey = await getDataFromDB<string>("apiKey");
       setApiKey(updatedKey || null);
     };
-    
+
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("apiKeyChanged", handleCustomStorageChange);
-    
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("apiKeyChanged", handleCustomStorageChange);
@@ -114,6 +117,17 @@ const MainLayout = () => {
     exit: { opacity: 0, x: 20, transition: { duration: 0.2 } }
   };
 
+  // Helper to handle nav click and set bounding box
+  const handleNavClick = (e: React.MouseEvent) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setNavBoundingBox({
+      top: rect.top,
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+    });
+  };
+
   return (
     <ArcrylicBgProvider value={arcrylicBg}>
       <div
@@ -125,7 +139,7 @@ const MainLayout = () => {
         {/* Header */}
         <header className="backdrop-blur-xs border-b sticky top-0 z-50">
           <nav className="container mx-auto flex justify-between items-center p-4">
-            <Link to="/Upload" className="flex items-center gap-2">
+            <Link to="/Upload/Upload" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full flex items-center justify-center">
                 <span className="font-bold">Truyen</span>
               </div>
@@ -143,17 +157,18 @@ const MainLayout = () => {
                 exit="exit"
                 variants={itemVariants}
               >
-                <Link to="/Upload">
+                <Link to="/Upload/Upload">
                   <Button
-                    variant={isActive("/Upload") ? "default" : "ghost"}
+                    variant={isActive("/Upload/Upload") ? "default" : "ghost"}
                     className="flex items-center gap-2 w-32 justify-start"
+                    onClick={handleNavClick}
                   >
                     <FileUp size={18} />
                     <span>Upload</span>
                   </Button>
                 </Link>
               </motion.div>
-              
+
               <motion.div
                 key="albums-btn"
                 initial="hidden"
@@ -161,17 +176,18 @@ const MainLayout = () => {
                 exit="exit"
                 variants={itemVariants}
               >
-                <Link to="/albums">
+                <Link to="/Upload/albums">
                   <Button
-                    variant={isActive("/albums") ? "default" : "ghost"}
+                    variant={isActive("/Upload/albums") ? "default" : "ghost"}
                     className="flex items-center gap-2 w-32 justify-start"
+                    onClick={handleNavClick}
                   >
                     <Album size={18} />
                     <span>Albums</span>
                   </Button>
                 </Link>
               </motion.div>
-              
+
               <AnimatePresence>
                 {apiKey && (
                   <>
@@ -182,17 +198,18 @@ const MainLayout = () => {
                       exit="exit"
                       variants={itemVariants}
                     >
-                      <Link to="/ocr">
+                      <Link to="/Upload/ocr">
                         <Button
-                          variant={isActive("/ocr") ? "default" : "ghost"}
+                          variant={isActive("/Upload/ocr") ? "default" : "ghost"}
                           className="flex items-center gap-2 w-32 justify-start"
+                          onClick={handleNavClick}
                         >
                           <ScrollText size={18} />
                           <span>OCR</span>
                         </Button>
                       </Link>
                     </motion.div>
-                    
+
                     <motion.div
                       key="translate-btn"
                       initial="hidden"
@@ -200,10 +217,11 @@ const MainLayout = () => {
                       exit="exit"
                       variants={itemVariants}
                     >
-                      <Link to="/translate">
+                      <Link to="/Upload/translate">
                         <Button
-                          variant={isActive("/translate") ? "default" : "ghost"}
+                          variant={isActive("/Upload/translate") ? "default" : "ghost"}
                           className="flex items-center gap-2 w-32 justify-start"
+                          onClick={handleNavClick}
                         >
                           <Languages size={18} />
                           <span>Translate</span>
@@ -226,8 +244,9 @@ const MainLayout = () => {
                 <DropdownMenuContent align="end" className="border">
                   <DropdownMenuItem>
                     <Link
-                      to="/Upload"
+                      to="/Upload/Upload"
                       className="flex items-center gap-2 w-full"
+                      onClick={handleNavClick}
                     >
                       <FileUp size={18} />
                       <span>Upload</span>
@@ -235,35 +254,37 @@ const MainLayout = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Link
-                      to="/albums"
+                      to="/Upload/albums"
                       className="flex items-center gap-2 w-full"
+                      onClick={handleNavClick}
                     >
                       <Album size={18} />
                       <span>Albums</span>
                     </Link>
                   </DropdownMenuItem>
-                  
+
                   {apiKey && (
                     <>
                       <DropdownMenuItem>
-                        <Link to="/ocr" className="flex items-center gap-2 w-full">
+                        <Link to="/Upload/ocr" className="flex items-center gap-2 w-full" onClick={handleNavClick}>
                           <ScrollText size={18} />
                           <span>OCR</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem>
-                        <Link to="/translate" className="flex items-center gap-2 w-full">
+                        <Link to="/Upload/translate" className="flex items-center gap-2 w-full" onClick={handleNavClick}>
                           <Languages size={18} />
                           <span>Translate</span>
                         </Link>
                       </DropdownMenuItem>
                     </>
                   )}
-                  
+
                   <DropdownMenuItem>
                     <Link
-                      to="/settings"
+                      to="/Upload/settings"
                       className="flex items-center gap-2 w-full"
+                      onClick={handleNavClick}
                     >
                       <Settings size={18} />
                       <span>{apiKey ? "Gemini" : "Settings"}</span>
@@ -280,10 +301,11 @@ const MainLayout = () => {
             {/* Right side: Theme switcher and Settings (desktop only) */}
             <div className="hidden md:flex items-center gap-2">
               <ThemeSwitcher />
-              <Link to="/settings">
+              <Link to="/Upload/settings">
                 <Button
-                  variant={isActive("/settings") ? "default" : "ghost"}
+                  variant={isActive("/Upload/settings") ? "default" : "ghost"}
                   className="flex items-center gap-2 w-32 justify-start"
+                  onClick={handleNavClick}
                 >
                   <Settings size={18} />
                   <motion.span

@@ -86,7 +86,7 @@ const RelationshipsTable: React.FC<RelationshipsTableProps> = ({
             </CardDescription>
           </div>
           <Badge variant="outline" className="h-6">
-            {relationshipsTable.length} {relationshipsTable.length === 1 ? "Entry" : "Entries"}
+            {relationshipsTable?.length} {relationshipsTable?.length === 1 ? "Entry" : "Entries"}
           </Badge>
         </div>
       </CardHeader>
@@ -243,7 +243,7 @@ const RelationshipsTable: React.FC<RelationshipsTableProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {relationshipsTable.length === 0 ? (
+                {relationshipsTable?.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center h-24 text-muted-foreground">
                       <div className="flex flex-col items-center justify-center">

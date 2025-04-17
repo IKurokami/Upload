@@ -98,7 +98,7 @@ export const LongPressOverlay: React.FC<LongPressOverlayProps> = ({
     top = Math.max(gap, Math.min(viewportHeight - overlayHeight - gap, top));
 
     setMenuPos({ top, left });
-  }, [rect, actions.length]);
+  }, [rect, actions?.length]);
 
   if (!rect) return null;
 

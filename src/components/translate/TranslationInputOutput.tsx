@@ -31,6 +31,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EvervaultCard } from "@/components/ui/evervault-card";
 
 interface Collection {
   id: string;
@@ -55,6 +56,7 @@ interface TranslationInputOutputProps {
   isCollectionManagementVisible: boolean;
   onToggleCollectionManagement: (id: string) => void;
   arcrylicBg?: boolean;
+  modelDescriptions?: Record<string, string>;
 }
 
 const MAX_INPUT_LENGTH = 32000;
@@ -77,15 +79,16 @@ const TranslationInputOutput: React.FC<TranslationInputOutputProps> = ({
   isCollectionManagementVisible,
   onToggleCollectionManagement,
   arcrylicBg,
+  modelDescriptions,
 }) => {
   const [showError, setShowError] = useState(true);
-  const inputLength = inputText.length;
+  const inputLength = inputText?.length;
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 md:gap-8 min-h-[650px] w-full">
       {/* Input Section */}
-      <Card className={cn("flex-1 flex flex-col shadow-lg rounded-xl border-0 bg-white/80 mb-6 lg:mb-0", arcrylicBg && "arcrylic-blur")}>
-        <CardHeader className="pb-2">
+      <Card className={cn("flex-1 flex flex-col shadow-lg rounded-xl border-0 mb-6 lg:mb-0", arcrylicBg && "arcrylic-blur")}>
+        <CardHeader className="pb-2 border-b border-muted/30">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">📝 Translate Text</CardTitle>
             <TooltipProvider>
@@ -98,6 +101,9 @@ const TranslationInputOutput: React.FC<TranslationInputOutputProps> = ({
                 </TooltipTrigger>
                 <TooltipContent side="left">
                   <p className="text-xs">Current translation model</p>
+                  {modelDescriptions && modelDescriptions[selectedModel] && (
+                    <p className="text-xs text-muted-foreground mt-1">{modelDescriptions[selectedModel]}</p>
+                  )}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -110,7 +116,7 @@ const TranslationInputOutput: React.FC<TranslationInputOutputProps> = ({
             <Textarea
               id="inputText"
               placeholder="Type or paste text to translate..."
-              className="min-h-[200px] sm:min-h-[300px] h-full text-sm sm:text-lg leading-relaxed rounded-xl p-3 sm:p-4 pr-12 sm:pr-16 focus-visible:ring-1 focus-visible:ring-primary/30 transition-all resize-none shadow-sm"
+              className="min-h-[200px] sm:min-h-[300px] h-full text-sm sm:text-lg leading-relaxed rounded-xl p-3 sm:p-4 pr-12 sm:pr-16 focus-visible:ring-1 focus-visible:ring-primary/30 transition-all resize-none shadow-sm max-h-[calc(100vh-200px)] break-words break-all whitespace-pre-wrap"
               value={inputText}
               maxLength={MAX_INPUT_LENGTH}
               onChange={(e) => setInputText(e.target.value)}
@@ -155,7 +161,12 @@ const TranslationInputOutput: React.FC<TranslationInputOutputProps> = ({
                 <SelectContent className="z-[100]">
                   {models.map((model) => (
                     <SelectItem key={model} value={model}>
-                      <span className="truncate">{model}</span>
+                      <div className="flex flex-col">
+                        <span className="truncate">{model}</span>
+                        {modelDescriptions && modelDescriptions[model] && (
+                          <span className="text-xs text-muted-foreground">{modelDescriptions[model]}</span>
+                        )}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -223,7 +234,7 @@ const TranslationInputOutput: React.FC<TranslationInputOutputProps> = ({
       </Card>
 
       {/* Output Section */}
-      <Card className={cn("flex-1 flex flex-col shadow-lg rounded-3xl border-0 bg-white/80 relative", arcrylicBg && "arcrylic-blur")}>
+      <Card className={cn("flex-1 flex flex-col shadow-lg rounded-3xl border-0 relative", arcrylicBg && "arcrylic-blur")}>
         <CardHeader className="pb-2 border-b border-muted/30">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">🌐 Translation</CardTitle>
@@ -275,7 +286,7 @@ const TranslationInputOutput: React.FC<TranslationInputOutputProps> = ({
           <div className="relative flex-1">
             <Textarea
               id="translatedText"
-              className="min-h-[200px] sm:min-h-[300px] h-full text-sm sm:text-lg leading-relaxed rounded-xl p-3 sm:p-4 pr-12 sm:pr-16 focus-visible:ring-1 focus-visible:ring-primary/30 transition-all resize-none shadow-sm"
+              className="min-h-[200px] sm:min-h-[300px] h-full text-sm sm:text-lg leading-relaxed rounded-xl p-3 sm:p-4 pr-12 sm:pr-16 focus-visible:ring-1 focus-visible:ring-primary/30 transition-all resize-none shadow-sm max-h-[calc(100vh-200px)] break-words break-all whitespace-pre-wrap"
               value={isTranslating ? "" : translatedText}
               readOnly
               placeholder="Translation will appear here..."
@@ -283,9 +294,8 @@ const TranslationInputOutput: React.FC<TranslationInputOutputProps> = ({
             />
             {/* Shimmer/animation while translating */}
             {isTranslating && (
-              <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded-xl animate-pulse z-10">
-                <Loader2 className="h-6 w-6 sm:h-8 sm:w-8 text-primary animate-spin" />
-                <span className="ml-2 sm:ml-3 text-base sm:text-lg text-primary font-semibold">Translating...</span>
+              <div className="absolute inset-0 flex items-center justify-center rounded-xl z-10 min-h-[200px] sm:min-h-[300px] max-h-[calc(100vh-200px)]">
+                <EvervaultCard text="Translating..." className="w-full h-full" />
               </div>
             )}
             {/* Floating Copy FAB */}

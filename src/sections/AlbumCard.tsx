@@ -90,7 +90,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album, onRename, onDelete }) => {
           <CardContent className="pt-2 flex-grow">
             <p className="text-sm flex items-center">
               <Badge variant="secondary" className="mr-1">
-                {album.imageUrls.length}
+                {album.imageUrls?.length}
               </Badge>{" "}
               images
             </p>
@@ -160,7 +160,7 @@ const AlbumCard: React.FC<AlbumCardProps> = ({ album, onRename, onDelete }) => {
                 <CardContent className="pt-2 flex-grow">
                   <p className="text-sm flex items-center">
                     <Badge variant="secondary" className="mr-1">
-                      {album.imageUrls.length}
+                      {album.imageUrls?.length}
                     </Badge>{" "}
                     images
                   </p>

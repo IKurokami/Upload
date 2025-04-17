@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useNavAnimation } from "@/contexts/NavAnimationContext";
 
 export default function AnimatedOutlet() {
   const location = useLocation();
@@ -9,9 +10,11 @@ export default function AnimatedOutlet() {
   const [isMobile, setIsMobile] = useState(
     typeof window !== "undefined" ? window.innerWidth <= 768 : false
   );
+  const { navBoundingBox, setNavBoundingBox } = useNavAnimation();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   function countSegments(path: string) {
-    return path.split("/").filter(Boolean).length;
+    return path.split("/").filter(Boolean)?.length;
   }
 
   useEffect(() => {
@@ -40,35 +43,68 @@ export default function AnimatedOutlet() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Calculate scale and translate for initial animation
+  function getInitialTransform() {
+    if (navBoundingBox && containerRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      // Fallback min size if container is too small
+      const minWidth = 800;
+      const minHeight = 400;
+      const containerWidth = containerRect.width < 50 ? minWidth : containerRect.width;
+      const containerHeight = containerRect.height < 50 ? minHeight : containerRect.height;
+      const scaleX = navBoundingBox.width / containerWidth;
+      const scaleY = navBoundingBox.height / containerHeight;
+      const translateX = navBoundingBox.left + navBoundingBox.width / 2 - (containerRect.left + containerWidth / 2);
+      const translateY = navBoundingBox.top + navBoundingBox.height / 2 - (containerRect.top + containerHeight / 2);
+      return {
+        scaleX,
+        scaleY,
+        translateX,
+        translateY,
+      };
+    }
+    return null;
+  }
+
   // Animation variants
   const desktopVariants = {
-    initial: () => ({
-      y: -150,
-      scale: 0.1,
-      opacity: 0,
-      width: "75%",
-      height: "10%",
-    }),
+    initial: () => {
+      const t = getInitialTransform();
+      if (t) {
+        return {
+          opacity: 0,
+          scaleX: t.scaleX,
+          scaleY: t.scaleY,
+          x: t.translateX,
+          y: t.translateY,
+        };
+      }
+      return {
+        opacity: 0,
+        scaleX: 1,
+        scaleY: 1,
+        x: 0,
+        y: 300,
+      };
+    },
     animate: {
       y: 0,
-      scale: 1,
+      x: 0,
+      scaleX: 1,
+      scaleY: 1,
       opacity: 1,
-      width: "100%",
-      height: "calc(100vh - 100px)",
       transition: {
         type: "spring",
         stiffness: 150,
         damping: 40,
         mass: 1.5,
-        duration: 3,
+        duration: 0.7,
       },
     },
     exit: {
       y: -150,
       scale: 0.98,
       opacity: 1,
-      width: "100%",
-      height: "100%",
       transition: {
         type: "spring",
         stiffness: 150,
@@ -80,33 +116,45 @@ export default function AnimatedOutlet() {
   };
 
   const settingsVariants = {
-    initial: () => ({
-      x: 1000,
-      scale: 0.5,
-      opacity: 0,
-      width: "10%",
-      height: "0%",
-    }),
+    initial: () => {
+      const t = getInitialTransform();
+      if (t) {
+        return {
+          opacity: 0,
+          scaleX: t.scaleX,
+          scaleY: t.scaleY,
+          x: t.translateX,
+          y: t.translateY,
+        };
+      }
+      return {
+        opacity: 0,
+        x: 1000,
+        scaleX: 0.5,
+        scaleY: 0.5,
+        y: 0,
+      };
+    },
     animate: {
       x: 0,
-      scale: 1,
+      y: 0,
+      scaleX: 1,
+      scaleY: 1,
       opacity: 1,
-      width: "100%",
-      height: "100%",
       transition: {
         type: "spring",
         stiffness: 150,
         damping: 40,
         mass: 1.5,
-        duration: 3,
+        duration: 0.7,
       },
     },
     exit: {
       x: -100,
-      scale: 0.98,
+      y: 0,
+      scaleX: 0.98,
+      scaleY: 0.98,
       opacity: 0,
-      width: "100%",
-      height: "100%",
       transition: {
         type: "spring",
         stiffness: 150,
@@ -118,30 +166,43 @@ export default function AnimatedOutlet() {
   };
 
   const mobileVariants = {
-    initial: {
-      y: 40,
-      scale: 0.92,
-      opacity: 0,
-      width: "100%",
+    initial: () => {
+      const t = getInitialTransform();
+      if (t) {
+        return {
+          opacity: 0,
+          scaleX: t.scaleX,
+          scaleY: t.scaleY,
+          x: t.translateX,
+          y: t.translateY,
+        };
+      }
+      return {
+        opacity: 0,
+        scaleX: 1,
+        scaleY: 1,
+        x: 0,
+        y: 0,
+      };
     },
     animate: {
       y: 0,
-      scale: 1,
+      x: 0,
+      scaleX: 1,
+      scaleY: 1,
       opacity: 1,
-      width: "100%",
       transition: {
         type: "spring",
         stiffness: 150,
         damping: 28,
         mass: 1,
-        duration: 1,
+        duration: 0.7,
       },
     },
     exit: {
       y: -20,
       scale: 0.96,
       opacity: 0,
-      width: "100%",
       transition: {
         type: "spring",
         stiffness: 150,
@@ -154,14 +215,22 @@ export default function AnimatedOutlet() {
 
   // Get variants based on current path
   const getVariants = () => {
-    if (location.pathname === "/settings") {
+    if (location.pathname.endsWith("/settings")) {
       return isMobile ? mobileVariants : settingsVariants;
     }
     return isMobile ? mobileVariants : desktopVariants;
   };
 
+  // Reset navBoundingBox after animation starts
+  useEffect(() => {
+    if (navBoundingBox) {
+      const timeout = setTimeout(() => setNavBoundingBox(null), 400);
+      return () => clearTimeout(timeout);
+    }
+  }, [location.pathname]);
+
   return (
-    <div style={{ position: "relative", minHeight: "60vh" }}>
+    <div ref={containerRef} style={{ position: "relative", minHeight: "60vh" }}>
       <AnimatePresence initial={false} custom={direction} mode="wait">
         <motion.div
           key={location.pathname}
@@ -172,7 +241,9 @@ export default function AnimatedOutlet() {
           style={{
             position: "absolute",
             width: "100%",
+            height: "100%",
             transformOrigin: "center center",
+            willChange: "transform, opacity",
           }}
         >
           <Outlet />
