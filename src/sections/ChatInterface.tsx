@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Maximize2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -1174,86 +1175,101 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
       </div>
 
-      {/* Image Modal */}
+      {/* Image Modal - Using a completely separate DialogContent with a higher z-index overlay */}
       <Dialog
         open={!!expandedImage}
         onOpenChange={(open) => {
           if (!open) handleCloseImageDialog();
         }}
       >
-        <DialogContent className="sm:max-w-4xl p-0 bg-background/95 backdrop-blur-xs border-none">
-          <div
-            ref={scrollContainerRef}
-            className="relative flex items-center justify-center max-h-[85vh] min-h-[300px] overflow-hidden"
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
+        <DialogPortal>
+          <DialogOverlay className="bg-black/80 z-[2000] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <DialogPrimitive.Content
+            className="fixed left-[50%] top-[50%] z-[2000] grid w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] p-0 sm:rounded-lg bg-background/95 backdrop-blur-xs border-none duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-75 data-[state=open]:zoom-in-95"
             style={{
-              cursor: isDragging
-                ? "grabbing"
-                : zoomLevel > 1
-                ? "grab"
-                : "default",
+              maxHeight: "90vh",
+              maxWidth: "90vw",
+              width: "auto",
+              transformOrigin: "center"
             }}
           >
-            {expandedImage && (
-              <div
-                className="transition-transform duration-200"
-                style={{
-                  transform: `scale(${zoomLevel})`,
-                  position: "relative",
-                  left: `${imagePosition.x}px`,
-                  top: `${imagePosition.y}px`,
-                }}
-              >
-                <img
-                  src={expandedImage}
-                  alt="Expanded view"
-                  className="max-w-full max-h-[80vh] object-contain"
-                  draggable={false}
-                />
-              </div>
-            )}
+            <DialogPrimitive.Close className="absolute right-3 top-3 z-10 rounded-full w-8 h-8 flex items-center justify-center bg-background/80 shadow-md opacity-70 hover:opacity-100">
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </DialogPrimitive.Close>
+            <div
+              ref={scrollContainerRef}
+              className="relative flex items-center justify-center max-h-[85vh] min-h-[300px] overflow-hidden"
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              style={{
+                cursor: isDragging
+                  ? "grabbing"
+                  : zoomLevel > 1
+                  ? "grab"
+                  : "default",
+              }}
+            >
+              {expandedImage && (
+                <div
+                  className="transition-transform duration-200"
+                  style={{
+                    transform: `scale(${zoomLevel})`,
+                    position: "relative",
+                    left: `${imagePosition.x}px`,
+                    top: `${imagePosition.y}px`,
+                  }}
+                >
+                  <img
+                    src={expandedImage}
+                    alt="Expanded view"
+                    className="max-w-full max-h-[80vh] object-contain"
+                    draggable={false}
+                  />
+                </div>
+              )}
 
-            {/* Help text for panning */}
-            {zoomLevel > 1 && (
-              <div className="absolute top-2 left-2 text-xs bg-background/70 p-1 px-2 rounded-md animate-in fade-in-0 duration-200">
-                {isDragging ? "Moving..." : "Click and drag to move"}
-              </div>
-            )}
+              {/* Help text for panning */}
+              {zoomLevel > 1 && (
+                <div className="absolute top-2 left-2 text-xs bg-background/70 p-1 px-2 rounded-md animate-in fade-in-0 duration-200">
+                  {isDragging ? "Moving..." : "Click and drag to move"}
+                </div>
+              )}
 
-            {/* Zoom controls */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-background/80 p-2 rounded-full shadow-md">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-full"
-                onClick={zoomOut}
-                disabled={zoomLevel <= 0.1}
-              >
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 min-w-14 text-xs"
-                onClick={resetZoom}
-              >
-                {Math.round(zoomLevel * 100)}%
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 rounded-full"
-                onClick={zoomIn}
-                disabled={zoomLevel >= 5}
-              >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
+              {/* Zoom controls */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-background/80 p-2 rounded-full shadow-md">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 rounded-full"
+                  onClick={zoomOut}
+                  disabled={zoomLevel <= 0.1}
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 min-w-14 text-xs"
+                  onClick={resetZoom}
+                >
+                  {Math.round(zoomLevel * 100)}%
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 rounded-full"
+                  onClick={zoomIn}
+                  disabled={zoomLevel >= 5}
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
-        </DialogContent>
+          </DialogPrimitive.Content>
+        </DialogPortal>
       </Dialog>
 
       {/* Expanded Input Dialog */}
@@ -1337,6 +1353,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 <TabsList className="mb-2">
                   <TabsTrigger value="raw">Raw</TabsTrigger>
                   <TabsTrigger value="markdown">Markdown</TabsTrigger>
+                  {previewUrls?.length > 0 && (
+                    <TabsTrigger value="images">Images ({previewUrls.length})</TabsTrigger>
+                  )}
                 </TabsList>
                 <TabsContent
                   value="raw"
@@ -1372,6 +1391,138 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   >
                     <LazyMarkdownPreview inputValue={inputValue} />
                   </React.Suspense>
+                </TabsContent>
+                <TabsContent
+                  value="images"
+                  className="flex-1 min-h-0 overflow-auto"
+                >
+                  {previewUrls?.length > 0 ? (
+                    <div className="p-4">
+                      <div className="text-sm text-muted-foreground mb-2">
+                        Drag images to reorder. Click an image to expand it.
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {previewUrls.map((url, index) => (
+                          <div 
+                            key={`gallery-${index}`} 
+                            className={cn(
+                              "relative group border rounded-md shadow-sm transition-all duration-200",
+                              draggedIndex === index && "opacity-50 border-primary border-dashed",
+                              dragOverIndex === index && "scale-[1.02] border-primary"
+                            )}
+                            draggable
+                            onDragStart={() => handleDragStart(index)}
+                            onDragOver={(e) => handleDragOver(e, index)}
+                            onDragEnd={handleDragEnd}
+                            onDrop={(e) => handleDrop(e, index)}
+                          >
+                            <div className="absolute top-2 left-2 bg-black/60 rounded-md p-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity cursor-move">
+                              <GripVertical className="h-4 w-4 text-white" />
+                            </div>
+                            
+                            <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                              <Button 
+                                variant="default" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-full shadow-md bg-black/60 hover:bg-black/80"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedImage(url);
+                                }}
+                              >
+                                <ZoomIn className="h-4 w-4 text-white" />
+                              </Button>
+                              <Button 
+                                variant="destructive" 
+                                size="icon" 
+                                className="h-8 w-8 rounded-full shadow-md"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeFile(index);
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            
+                            <img 
+                              src={url}
+                              alt={`Image ${index + 1}`}
+                              className="w-full h-auto rounded-md object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => setExpandedImage(url)}
+                            />
+                            
+                            <div className="bg-background/95 backdrop-blur-[2px] p-2 text-xs flex justify-between items-center">
+                              <span>Image {index + 1}</span>
+                              <div className="flex items-center gap-1">
+                                <button 
+                                  className="p-1 rounded-md hover:bg-muted transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // Move image left if not first
+                                    if (index > 0) {
+                                      const newFiles = [...selectedFiles];
+                                      const newPreviews = [...previewUrls];
+                                      
+                                      // Swap with previous
+                                      [newFiles[index], newFiles[index-1]] = [newFiles[index-1], newFiles[index]];
+                                      [newPreviews[index], newPreviews[index-1]] = [newPreviews[index-1], newPreviews[index]];
+                                      
+                                      setSelectedFiles(newFiles);
+                                      setPreviewUrls(newPreviews);
+                                    }
+                                  }}
+                                  disabled={index === 0}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={index === 0 ? "opacity-30" : ""}>
+                                    <path d="m15 18-6-6 6-6" />
+                                  </svg>
+                                </button>
+                                <button 
+                                  className="p-1 rounded-md hover:bg-muted transition-colors"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    // Move image right if not last
+                                    if (index < previewUrls.length - 1) {
+                                      const newFiles = [...selectedFiles];
+                                      const newPreviews = [...previewUrls];
+                                      
+                                      // Swap with next
+                                      [newFiles[index], newFiles[index+1]] = [newFiles[index+1], newFiles[index]];
+                                      [newPreviews[index], newPreviews[index+1]] = [newPreviews[index+1], newPreviews[index]];
+                                      
+                                      setSelectedFiles(newFiles);
+                                      setPreviewUrls(newPreviews);
+                                    }
+                                  }}
+                                  disabled={index === previewUrls.length - 1}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={index === previewUrls.length - 1 ? "opacity-30" : ""}>
+                                    <path d="m9 18 6-6-6-6" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center p-4">
+                        <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
+                        <p className="text-muted-foreground">No images attached</p>
+                        <Button 
+                          variant="outline" 
+                          className="mt-4"
+                          onClick={() => dialogFileInputRef.current?.click()}
+                        >
+                          <Paperclip className="h-4 w-4 mr-2" />
+                          Add Images
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
             </div>

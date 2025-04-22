@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavAnimation } from "@/contexts/NavAnimationContext";
 
 export default function AnimatedOutlet() {
@@ -11,7 +11,6 @@ export default function AnimatedOutlet() {
     typeof window !== "undefined" ? window.innerWidth <= 768 : false
   );
   const { navBoundingBox, setNavBoundingBox } = useNavAnimation();
-  const containerRef = useRef<HTMLDivElement>(null);
 
   function countSegments(path: string) {
     return path.split("/").filter(Boolean)?.length;
@@ -43,174 +42,101 @@ export default function AnimatedOutlet() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Calculate scale and translate for initial animation
-  function getInitialTransform() {
-    if (navBoundingBox && containerRef.current) {
-      const containerRect = containerRef.current.getBoundingClientRect();
-      // Fallback min size if container is too small
-      const minWidth = 800;
-      const minHeight = 400;
-      const containerWidth = containerRect.width < 50 ? minWidth : containerRect.width;
-      const containerHeight = containerRect.height < 50 ? minHeight : containerRect.height;
-      const scaleX = navBoundingBox.width / containerWidth;
-      const scaleY = navBoundingBox.height / containerHeight;
-      const translateX = navBoundingBox.left + navBoundingBox.width / 2 - (containerRect.left + containerWidth / 2);
-      const translateY = navBoundingBox.top + navBoundingBox.height / 2 - (containerRect.top + containerHeight / 2);
-      return {
-        scaleX,
-        scaleY,
-        translateX,
-        translateY,
-      };
-    }
-    return null;
-  }
+  // Spring transitions with growth effect
+  const springTransition = {
+    type: "spring",
+    stiffness: 150,
+    damping: 28,
+    mass: 1,
+    duration: 3,
+  };
 
-  // Animation variants
+  // Animation variants with growing effect using transform scaling
   const desktopVariants = {
-    initial: () => {
-      const t = getInitialTransform();
-      if (t) {
-        return {
-          opacity: 0,
-          scaleX: t.scaleX,
-          scaleY: t.scaleY,
-          x: t.translateX,
-          y: t.translateY,
-        };
-      }
-      return {
-        opacity: 0,
-        scaleX: 1,
-        scaleY: 1,
-        x: 0,
-        y: 300,
-      };
+    initial: {
+      opacity: 0,
+      scale: 0.9,
     },
     animate: {
-      y: 0,
-      x: 0,
-      scaleX: 1,
-      scaleY: 1,
       opacity: 1,
+      scale: 1,
       transition: {
-        type: "spring",
-        stiffness: 150,
-        damping: 40,
-        mass: 1.5,
-        duration: 0.7,
+        x: springTransition,
+        scale: {
+          type: "spring",
+          stiffness: 150,
+          damping: 28,
+          mass: 1,
+          duration: 0.2,
+        },
       },
     },
-    exit: {
-      y: -150,
-      scale: 0.98,
-      opacity: 1,
+    exit: (direction: number) => ({
+      opacity: 0,
+      x: direction,
+      scale: 0.95,
       transition: {
-        type: "spring",
-        stiffness: 150,
-        damping: 40,
-        mass: 1.5,
-        duration: 0.1,
+        x: springTransition,
+        opacity: { duration: 0.2 },
+        scale: { duration: 0.2 }
       },
-    },
+    }),
   };
 
   const settingsVariants = {
-    initial: () => {
-      const t = getInitialTransform();
-      if (t) {
-        return {
-          opacity: 0,
-          scaleX: t.scaleX,
-          scaleY: t.scaleY,
-          x: t.translateX,
-          y: t.translateY,
-        };
-      }
-      return {
-        opacity: 0,
-        x: 1000,
-        scaleX: 0.5,
-        scaleY: 0.5,
-        y: 0,
-      };
-    },
+    initial: () => ({
+      opacity: 0,
+      x: 100,
+      scale: 0.9, // Start at 90% size
+    }),
     animate: {
-      x: 0,
-      y: 0,
-      scaleX: 1,
-      scaleY: 1,
       opacity: 1,
+      x: 0,
+      scale: 1, // Grow to full size
       transition: {
-        type: "spring",
-        stiffness: 150,
-        damping: 40,
-        mass: 1.5,
-        duration: 0.7,
+        x: springTransition,
+        opacity: { duration: 0.3 },
+        scale: { type: "spring", stiffness: 250, damping: 32 }
       },
     },
     exit: {
-      x: -100,
-      y: 0,
-      scaleX: 0.98,
-      scaleY: 0.98,
       opacity: 0,
+      x: -100,
+      scale: 0.95,
       transition: {
-        type: "spring",
-        stiffness: 150,
-        damping: 40,
-        mass: 1.5,
-        duration: 0.1,
+        x: springTransition,
+        opacity: { duration: 0.2 },
+        scale: { duration: 0.2 }
       },
     },
   };
 
   const mobileVariants = {
-    initial: () => {
-      const t = getInitialTransform();
-      if (t) {
-        return {
-          opacity: 0,
-          scaleX: t.scaleX,
-          scaleY: t.scaleY,
-          x: t.translateX,
-          y: t.translateY,
-        };
-      }
-      return {
-        opacity: 0,
-        scaleX: 1,
-        scaleY: 1,
-        x: 0,
-        y: 0,
-      };
-    },
-    animate: {
-      y: 0,
-      x: 0,
-      scaleX: 1,
-      scaleY: 1,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 150,
-        damping: 28,
-        mass: 1,
-        duration: 0.7,
-      },
-    },
-    exit: {
-      y: -20,
-      scale: 0.96,
+    initial: (direction: number) => ({
       opacity: 0,
+      x: direction * 60,
+      scale: 0.9, // Start at 90% size
+    }),
+    animate: {
+      opacity: 1,
+      x: 0,
+      scale: 1, // Grow to full size
       transition: {
-        type: "spring",
-        stiffness: 150,
-        damping: 28,
-        mass: 1,
-        duration: 0.1,
+        x: springTransition,
+        opacity: { duration: 0.3 },
+        scale: { type: "spring", stiffness: 250, damping: 32 }
       },
     },
+    exit: (direction: number) => ({
+      opacity: 0,
+      x: direction * -60,
+      scale: 0.95,
+      transition: {
+        x: springTransition,
+        opacity: { duration: 0.2 },
+        scale: { duration: 0.2 }
+      },
+    }),
   };
 
   // Get variants based on current path
@@ -221,7 +147,6 @@ export default function AnimatedOutlet() {
     return isMobile ? mobileVariants : desktopVariants;
   };
 
-  // Reset navBoundingBox after animation starts
   useEffect(() => {
     if (navBoundingBox) {
       const timeout = setTimeout(() => setNavBoundingBox(null), 400);
@@ -230,8 +155,8 @@ export default function AnimatedOutlet() {
   }, [location.pathname]);
 
   return (
-    <div ref={containerRef} style={{ position: "relative", minHeight: "60vh" }}>
-      <AnimatePresence initial={false} custom={direction} mode="wait">
+    <div className="relative min-h-[60vh]">
+      <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={location.pathname}
           custom={direction}
@@ -239,11 +164,11 @@ export default function AnimatedOutlet() {
           initial="initial"
           animate="animate"
           style={{
-            position: "absolute",
+            position: "relative",
             width: "100%",
-            height: "100%",
-            transformOrigin: "center center",
+            transformOrigin: "center top",
             willChange: "transform, opacity",
+            display: "block",
           }}
         >
           <Outlet />

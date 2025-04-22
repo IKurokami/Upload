@@ -16,6 +16,7 @@ import { Toaster } from "sonner";
 import { getDataFromDB } from "@/lib/db";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavAnimation } from "@/contexts/NavAnimationContext";
+import { NavBackgroundAnimation } from "@/components/animation/NavBackgroundAnimation";
 
 const MainLayout = () => {
   const location = useLocation();
@@ -119,14 +120,82 @@ const MainLayout = () => {
 
   // Helper to handle nav click and set bounding box
   const handleNavClick = (e: React.MouseEvent) => {
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setNavBoundingBox({
-      top: rect.top,
-      left: rect.left,
-      width: rect.width,
-      height: rect.height,
-    });
+    // Don't proceed if clicking on the currently active item
+    if ((e.currentTarget as HTMLElement).classList.contains('active-nav-item')) {
+      return;
+    }
+    
+    // Get the button element's exact position in the viewport
+    const button = e.currentTarget.querySelector('button');
+    if (button) {
+      const buttonRect = button.getBoundingClientRect();
+      
+      // Set the nav bounding box with client coordinates (viewport-relative)
+      setNavBoundingBox({
+        top: buttonRect.top,
+        left: buttonRect.left,
+        width: buttonRect.width,
+        height: buttonRect.height,
+      });
+    }
   };
+
+  // Initialize the active navigation position when component mounts
+  useEffect(() => {
+    // Initialize position after a short delay to ensure DOM is ready
+    const initialTimer = setTimeout(() => {
+      // Find the active navigation button based on current route
+      let route = location.pathname;
+      if (route === '/') route = '/Upload/Upload'; // Default route
+      
+      const selector = `.nav-item-${route.replace(/\//g, "-").replace(/^-/, "")}`;
+      console.log("Looking for active nav item with selector:", selector);
+      
+      const activeBtn = document.querySelector(selector);
+      
+      if (activeBtn) {
+        console.log("Found active button:", activeBtn);
+        const rect = activeBtn.getBoundingClientRect();
+        setNavBoundingBox({
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height,
+        });
+      } else {
+        console.log("No active navigation button found");
+      }
+    }, 300);
+    
+    return () => clearTimeout(initialTimer);
+  }, []); // Only on mount
+  
+  // Update position when route changes
+  useEffect(() => {
+    // Wait for the route transition to complete
+    const routeTimer = setTimeout(() => {
+      // Find the active navigation button based on current route
+      let route = location.pathname;
+      if (route === '/') route = '/Upload/Upload'; // Default route
+      
+      const activeNavButton = document.querySelector(
+        `.nav-item-${route.replace(/\//g, "-").replace(/^-/, "")}`
+      );
+      
+      // If an active button is found, set its bounding box
+      if (activeNavButton) {
+        const activeRect = activeNavButton.getBoundingClientRect();
+        setNavBoundingBox({
+          top: activeRect.top,
+          left: activeRect.left,
+          width: activeRect.width,
+          height: activeRect.height,
+        });
+      }
+    }, 50);
+
+    return () => clearTimeout(routeTimer);
+  }, [location.pathname, setNavBoundingBox]);
 
   return (
     <ArcrylicBgProvider value={arcrylicBg}>
@@ -136,6 +205,10 @@ const MainLayout = () => {
       >
         {/* Top Loading Bar */}
         <TopLoadingBar progress={progress} isLoading={isLoading} />
+        
+        {/* Navigation background animation */}
+        <NavBackgroundAnimation />
+        
         {/* Header */}
         <header className="backdrop-blur-xs border-b sticky top-0 z-50">
           <nav className="container mx-auto flex justify-between items-center p-4">
@@ -149,7 +222,8 @@ const MainLayout = () => {
             </Link>
 
             {/* Desktop navigation */}
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-1 relative nav-container" style={{ position: 'relative' }}>
+              {/* Navigation items */}
               <motion.div
                 key="upload-btn"
                 initial="hidden"
@@ -159,8 +233,10 @@ const MainLayout = () => {
               >
                 <Link to="/Upload/Upload">
                   <Button
-                    variant={isActive("/Upload/Upload") ? "default" : "ghost"}
-                    className="flex items-center gap-2 w-32 justify-start"
+                    variant="ghost"
+                    className={`flex items-center gap-2 w-32 justify-start relative z-10 nav-item-Upload-Upload ${
+                      isActive("/Upload/Upload") ? "text-primary-foreground active-nav-item !opacity-100" : ""
+                    }`}
                     onClick={handleNavClick}
                   >
                     <FileUp size={18} />
@@ -178,8 +254,10 @@ const MainLayout = () => {
               >
                 <Link to="/Upload/albums">
                   <Button
-                    variant={isActive("/Upload/albums") ? "default" : "ghost"}
-                    className="flex items-center gap-2 w-32 justify-start"
+                    variant="ghost"
+                    className={`flex items-center gap-2 w-32 justify-start relative z-10 nav-item-Upload-albums ${
+                      isActive("/Upload/albums") ? "text-primary-foreground active-nav-item !opacity-100" : ""
+                    }`}
                     onClick={handleNavClick}
                   >
                     <Album size={18} />
@@ -200,8 +278,10 @@ const MainLayout = () => {
                     >
                       <Link to="/Upload/ocr">
                         <Button
-                          variant={isActive("/Upload/ocr") ? "default" : "ghost"}
-                          className="flex items-center gap-2 w-32 justify-start"
+                          variant="ghost"
+                          className={`flex items-center gap-2 w-32 justify-start relative z-10 nav-item-Upload-ocr ${
+                            isActive("/Upload/ocr") ? "text-primary-foreground active-nav-item !opacity-100" : ""
+                          }`}
                           onClick={handleNavClick}
                         >
                           <ScrollText size={18} />
@@ -219,8 +299,10 @@ const MainLayout = () => {
                     >
                       <Link to="/Upload/translate">
                         <Button
-                          variant={isActive("/Upload/translate") ? "default" : "ghost"}
-                          className="flex items-center gap-2 w-32 justify-start"
+                          variant="ghost"
+                          className={`flex items-center gap-2 w-32 justify-start relative z-10 nav-item-Upload-translate ${
+                            isActive("/Upload/translate") ? "text-primary-foreground active-nav-item !opacity-100" : ""
+                          }`}
                           onClick={handleNavClick}
                         >
                           <Languages size={18} />
@@ -299,12 +381,14 @@ const MainLayout = () => {
               </DropdownMenu>
             </div>
             {/* Right side: Theme switcher and Settings (desktop only) */}
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2 relative nav-container">
               <ThemeSwitcher />
               <Link to="/Upload/settings">
                 <Button
-                  variant={isActive("/Upload/settings") ? "default" : "ghost"}
-                  className="flex items-center gap-2 w-32 justify-start"
+                  variant="ghost"
+                  className={`flex items-center gap-2 w-32 justify-start relative z-10 nav-item-Upload-settings ${
+                    isActive("/Upload/settings") ? "text-primary-foreground active-nav-item !opacity-100" : ""
+                  }`}
                   onClick={handleNavClick}
                 >
                   <Settings size={18} />
@@ -352,7 +436,7 @@ const MainLayout = () => {
         </main>
 
         {/* Toaster */}
-        <Toaster position="bottom-right" />
+        <Toaster position="top-right" />
       </div>
     </ArcrylicBgProvider>
   );

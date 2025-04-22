@@ -11,34 +11,7 @@ import {
 } from "@/components/ui/tooltip";
 import { X, ChevronUp, ChevronDown, Clock, CheckCircle, ChevronsUp, ChevronsDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface MappingEntry {
-  term?: string;
-  transcription?: string;
-  type?: string;
-  gender?: string;
-  notes?: string;
-}
-
-interface RelationshipEntry {
-  characterA?: string;
-  characterB?: string;
-  relationship?: string;
-  addressTermsAToB?: string;
-  addressTermsBToA?: string;
-  notes?: string;
-}
-
-interface TableUpdateEntry {
-  id: string;
-  timestamp: number;
-  type: 'mapping' | 'relationships';
-  updates: {
-    added: (MappingEntry | RelationshipEntry)[];
-    updated: (MappingEntry | RelationshipEntry)[];
-  };
-  status: 'pending' | 'approved' | 'rejected';
-}
+import { TableUpdateEntry } from "@/types/translateTypes";
 
 interface TableUpdatesPanelProps {
   showTableUpdates: boolean;
@@ -48,29 +21,27 @@ interface TableUpdatesPanelProps {
   expandedEntries: Set<string>;
   toggleEntryExpansion: (entryId: string) => void;
   setShowTableUpdates: (show: boolean) => void;
-  setCurrentUpdateEntry: (entry: TableUpdateEntry) => void;
-  setShowUpdateConfirmation: (show: boolean) => void;
+  handleUpdateConfirmation: (updateEntry: TableUpdateEntry, approve: boolean) => void;
+  showUpdateConfirmation: (entry: TableUpdateEntry | null) => void;
 }
 
 const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
   showTableUpdates,
   isTableUpdatesAnimating,
-  arcrylicBg,
   pendingTableUpdates,
   expandedEntries,
   toggleEntryExpansion,
   setShowTableUpdates,
-  setCurrentUpdateEntry,
-  setShowUpdateConfirmation,
+  handleUpdateConfirmation,
+  showUpdateConfirmation,
 }) => {
   if (!showTableUpdates) return null;
-  
+
   return (
     <Card
       className={cn(
         "fixed bottom-20 right-6 w-96 max-w-[calc(100vw-3rem)] z-[9998] shadow-lg transition-all duration-300 ease-in-out rounded-xl border-border/40",
-        isTableUpdatesAnimating ? "translate-y-4 opacity-0" : "translate-y-0 opacity-100",
-        arcrylicBg && "arcrylic-blur"
+        isTableUpdatesAnimating ? "translate-y-4 opacity-0" : "translate-y-0 opacity-100"
       )}
     >
       <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
@@ -89,7 +60,7 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
           <X className="h-4 w-4" />
         </Button>
       </CardHeader>
-      
+
       <CardContent className="p-3">
         <ScrollArea className="max-h-[60vh] pr-2 overflow-y-auto">
           <div className="space-y-3">
@@ -102,10 +73,10 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
                         <span className="text-sm font-medium">
                           {update.type === 'mapping' ? 'Mapping Table' : 'Relationships Table'}
                         </span>
-                        <Badge 
+                        <Badge
                           variant={
                             update.status === 'pending' ? 'outline' :
-                            update.status === 'approved' ? 'secondary' : 'destructive'
+                              update.status === 'approved' ? 'secondary' : 'destructive'
                           }
                           className="ml-2 text-xs px-1.5"
                         >
@@ -117,7 +88,7 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
                         {new Date(update.timestamp).toLocaleString()}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                       <Button
                         variant="ghost"
@@ -138,10 +109,7 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
                               variant="outline"
                               size="sm"
                               className="h-8"
-                              onClick={() => {
-                                setCurrentUpdateEntry(update);
-                                setShowUpdateConfirmation(true);
-                              }}
+                              onClick={() => showUpdateConfirmation(update)}
                             >
                               Review
                             </Button>
@@ -153,7 +121,7 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
                       </TooltipProvider>
                     </div>
                   </div>
-                  
+
                   {expandedEntries.has(update.id) && (
                     <div className="p-3 space-y-3 bg-background">
                       {/* Added Entries */}
@@ -171,8 +139,8 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
                           <ScrollArea className="h-[120px]">
                             <div className="bg-muted/30 rounded-md p-2.5">
                               {update.updates.added.map((entry: any, idx) => (
-                                <div 
-                                  key={idx} 
+                                <div
+                                  key={idx}
                                   className="text-xs py-1.5 px-2 rounded mb-1 hover:bg-accent/50 transition-colors"
                                 >
                                   {update.type === 'mapping' ? (
@@ -192,7 +160,7 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
                           </ScrollArea>
                         </div>
                       )}
-                      
+
                       {/* Updated Entries */}
                       {update.updates.updated?.length > 0 && (
                         <div>
@@ -208,8 +176,8 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
                           <ScrollArea className="h-[120px]">
                             <div className="bg-muted/30 rounded-md p-2.5">
                               {update.updates.updated.map((entry: any, idx) => (
-                                <div 
-                                  key={idx} 
+                                <div
+                                  key={idx}
                                   className="text-xs py-1.5 px-2 rounded mb-1 hover:bg-accent/50 transition-colors"
                                 >
                                   {update.type === 'mapping' ? (
@@ -229,6 +197,25 @@ const TableUpdatesPanel: React.FC<TableUpdatesPanelProps> = ({
                           </ScrollArea>
                         </div>
                       )}
+
+                      <div className="flex justify-end gap-2 mt-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => handleUpdateConfirmation(update, false)}
+                        >
+                          Reject
+                        </Button>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => handleUpdateConfirmation(update, true)}
+                        >
+                          Approve
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>

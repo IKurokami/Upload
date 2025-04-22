@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Card,
   CardHeader,
@@ -31,12 +31,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Collection } from "@/types/translateTypes";
 import { EvervaultCard } from "@/components/ui/evervault-card";
-
-interface Collection {
-  id: string;
-  name: string;
-}
 
 interface TranslationInputOutputProps {
   inputText: string;
@@ -57,6 +53,8 @@ interface TranslationInputOutputProps {
   onToggleCollectionManagement: (id: string) => void;
   arcrylicBg?: boolean;
   modelDescriptions?: Record<string, string>;
+  clearInputText: () => void;
+  setErrorMessage: (error: string | null) => void;
 }
 
 const MAX_INPUT_LENGTH = 32000;
@@ -80,12 +78,13 @@ const TranslationInputOutput: React.FC<TranslationInputOutputProps> = ({
   onToggleCollectionManagement,
   arcrylicBg,
   modelDescriptions,
+  clearInputText,
+  setErrorMessage,
 }) => {
-  const [showError, setShowError] = useState(true);
-  const inputLength = inputText?.length;
+  const inputLength = inputText?.length || 0;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 md:gap-8 min-h-[650px] w-full">
+    <div className="flex flex-col lg:flex-row gap-6 md:gap-8 min-h-[650px] max-h-[calc(100vh-200px)] w-full overflow-hidden">
       {/* Input Section */}
       <Card className={cn("flex-1 flex flex-col shadow-lg rounded-xl border-0 mb-6 lg:mb-0", arcrylicBg && "arcrylic-blur")}>
         <CardHeader className="pb-2 border-b border-muted/30">
@@ -111,12 +110,12 @@ const TranslationInputOutput: React.FC<TranslationInputOutputProps> = ({
         </CardHeader>
 
         {/* Input Area */}
-        <div className="flex-1 flex flex-col px-4 sm:px-6 py-3 sm:py-4">
-          <div className="relative flex-1">
+        <div className="flex-1 flex flex-col px-4 sm:px-6 py-3 sm:py-4 overflow-hidden">
+          <div className="relative flex-1 overflow-hidden">
             <Textarea
               id="inputText"
               placeholder="Type or paste text to translate..."
-              className="min-h-[200px] sm:min-h-[300px] h-full text-sm sm:text-lg leading-relaxed rounded-xl p-3 sm:p-4 pr-12 sm:pr-16 focus-visible:ring-1 focus-visible:ring-primary/30 transition-all resize-none shadow-sm max-h-[calc(100vh-200px)] break-words break-all whitespace-pre-wrap"
+              className="min-h-[200px] sm:min-h-[300px] h-full text-sm sm:text-lg leading-relaxed rounded-xl p-3 sm:p-4 pr-12 sm:pr-16 focus-visible:ring-1 focus-visible:ring-primary/30 transition-all resize-none shadow-sm max-h-[calc(100vh-200px)] overflow-auto break-words break-all whitespace-pre-wrap"
               value={inputText}
               maxLength={MAX_INPUT_LENGTH}
               onChange={(e) => setInputText(e.target.value)}
@@ -133,7 +132,7 @@ const TranslationInputOutput: React.FC<TranslationInputOutputProps> = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setInputText("")}
+                    onClick={clearInputText}
                     disabled={!inputText.trim() || isTranslating}
                     className="absolute top-2 right-2 rounded-full"
                     aria-label="Clear input"
@@ -250,75 +249,52 @@ const TranslationInputOutput: React.FC<TranslationInputOutputProps> = ({
                     aria-label="Copy translation"
                   >
                     {isCopied ? (
-                      <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
                     ) : (
-                      <Clipboard className="h-4 w-4 sm:h-5 sm:w-5" />
+                      <Clipboard className="h-4 w-4" />
                     )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="left">
-                  <p className="text-xs">Copy translation</p>
+                  <p className="text-xs">{isCopied ? "Copied!" : "Copy to clipboard"}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
         </CardHeader>
-        {/* Error Alert */}
-        {error && !error.includes("import") && showError && (
-          <div className="mx-3 sm:mx-6 mt-3 sm:mt-4 mb-1 sm:mb-2">
-            <div className="flex items-center bg-destructive/10 border border-destructive/30 text-destructive rounded-lg px-3 sm:px-4 py-2 relative">
-              <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2 flex-shrink-0" />
-              <span className="flex-1 text-xs sm:text-sm">{error}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 sm:h-8 sm:w-8 ml-1 sm:ml-2 text-destructive/70 hover:text-destructive p-0"
-                onClick={() => setShowError(false)}
-                aria-label="Dismiss error"
-              >
-                ×
-              </Button>
-            </div>
-          </div>
-        )}
-        {/* Output Area */}
-        <div className="flex-1 flex flex-col px-4 sm:px-6 py-3 sm:py-4">
-          <div className="relative flex-1">
-            <Textarea
-              id="translatedText"
-              className="min-h-[200px] sm:min-h-[300px] h-full text-sm sm:text-lg leading-relaxed rounded-xl p-3 sm:p-4 pr-12 sm:pr-16 focus-visible:ring-1 focus-visible:ring-primary/30 transition-all resize-none shadow-sm max-h-[calc(100vh-200px)] break-words break-all whitespace-pre-wrap"
-              value={isTranslating ? "" : translatedText}
-              readOnly
-              placeholder="Translation will appear here..."
-              aria-label="Translated text output"
-            />
-            {/* Shimmer/animation while translating */}
-            {isTranslating && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-xl z-10 min-h-[200px] sm:min-h-[300px] max-h-[calc(100vh-200px)]">
-                <EvervaultCard text="Translating..." className="w-full h-full" />
+
+        <div className="p-3 sm:p-4 flex-1 overflow-hidden">
+          {error ? (
+            <div className="text-destructive flex items-start p-3 rounded-lg bg-destructive/10 mb-3">
+              <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm">{error}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 mt-2 text-xs px-2 py-1"
+                  onClick={() => setErrorMessage(null)}
+                >
+                  Dismiss
+                </Button>
               </div>
-            )}
-            {/* Floating Copy FAB */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="default"
-                    size="icon"
-                    onClick={onCopy}
-                    disabled={!translatedText}
-                    className="absolute bottom-3 right-3 rounded-full shadow-lg h-9 w-9 sm:h-10 sm:w-10"
-                    aria-label="Copy translation"
-                  >
-                    {isCopied ? <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" /> : <Clipboard className="h-5 w-5 sm:h-6 sm:w-6" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  <p className="text-xs">Copy translation</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+            </div>
+          ) : (
+            <>
+              {translatedText ? (
+                <div className="rounded-xl h-full overflow-y-auto px-4 py-3 bg-muted/30">
+                  <p className="text-sm sm:text-base whitespace-pre-wrap break-words">
+                    {translatedText}
+                  </p>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
+                  <EvervaultCard text="Translation" className="w-64 h-64 opacity-30 mb-4" />
+                  <p className="text-sm">Enter text and click Translate to see results here</p>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </Card>
     </div>

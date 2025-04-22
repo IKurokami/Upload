@@ -10,21 +10,21 @@ const features = [
     title: "Upload HTML",
     description: "Quickly upload and process your HTML files.",
     icon: <FileUp className="w-8 h-8 text-primary" />,
-    link: "/upload",
+    link: "/Upload/Upload",
     action: "Upload now",
   },
   {
     title: "View Albums",
     description: "Browse and manage your saved albums.",
     icon: <Album className="w-8 h-8 text-primary" />,
-    link: "/albums",
+    link: "/Upload/albums",
     action: "View albums",
   },
   {
     title: "Extract Text",
     description: "Perform OCR on images and extract valuable text.",
     icon: <ScrollText className="w-8 h-8 text-primary" />,
-    link: "/ocr",
+    link: "/Upload/ocr",
     action: "Start OCR",
   },
 ];
@@ -143,7 +143,7 @@ const HomePage = () => (
         <p className="text-lg text-muted-foreground mb-8">
           Start using Truyen today and transform how you manage your content.
         </p>
-        <Link to="/upload">
+        <Link to="/Upload/Upload">
           <Button size="lg" className="group">
             Get Started
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -160,9 +160,9 @@ const HomePage = () => (
           <p className="text-sm text-muted-foreground">Your content management solution</p>
         </div>
         <div className="flex gap-8">
-          <Link to="/upload" className="text-sm hover:text-primary transition-colors">Upload</Link>
-          <Link to="/albums" className="text-sm hover:text-primary transition-colors">Albums</Link>
-          <Link to="/ocr" className="text-sm hover:text-primary transition-colors">OCR</Link>
+          <Link to="/Upload/Upload" className="text-sm hover:text-primary transition-colors">Upload</Link>
+          <Link to="/Upload/albums" className="text-sm hover:text-primary transition-colors">Albums</Link>
+          <Link to="/Upload/ocr" className="text-sm hover:text-primary transition-colors">OCR</Link>
         </div>
         <div className="text-sm text-muted-foreground">
           © {new Date().getFullYear()} Truyen. All rights reserved.

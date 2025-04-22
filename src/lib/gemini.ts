@@ -127,7 +127,8 @@ export const processMultipleWithGemini = async (
         responseMimeType: options.responseMimeType || "text/plain",
       },
     });
-    console.log('Result:', result);
+    console.log('Result:', result.response.functionCalls);
+
     return processResponse(result.response, tableUpdateCallbacks);
   } catch (error: any) {
     console.error("Gemini Error:", error);
@@ -235,59 +236,67 @@ function processResponse(
 ): ExtendedGeminiResponse {
   console.log('Processing Gemini response:', response);
 
-  // Handle structured response
-  if (!response.candidates || response.candidates?.length === 0) {
-    console.log('No candidates found in response');
+  try {
+    // Handle empty response
+    if (!response) {
+      console.log('No response received');
+      return {
+        thinking: "No response generated.",
+        ocrText: "No response generated.",
+        hasError: true,
+      };
+    }
+
+    // Get text content using EnhancedGenerateContentResponse methods
+    let translation = "";
+    try {
+      translation = response.text();
+    } catch (error) {
+      console.log('Error getting text from response:', error);
+    }
+
+    // Process function calls using EnhancedGenerateContentResponse methods
+    const functionCalls = response.functionCalls();
+    if (functionCalls && functionCalls.length > 0) {
+      console.log('Found function calls:', functionCalls);
+
+      for (const functionCall of functionCalls) {
+        const { name, args } = functionCall;
+        console.log('Processing function call:', name, args);
+
+        switch (name) {
+          case "setMappingTable":
+            if (tableUpdateCallbacks?.onMappingTableUpdate && args.entries) {
+              console.log('Updating mapping table with entries:', args.entries);
+              tableUpdateCallbacks.onMappingTableUpdate(args.entries);
+            }
+            break;
+          case "setRelationshipsTable":
+            if (tableUpdateCallbacks?.onRelationshipsTableUpdate && args.entries) {
+              console.log('Updating relationships table with entries:', args.entries);
+              tableUpdateCallbacks.onRelationshipsTableUpdate(args.entries);
+            }
+            break;
+        }
+      }
+    }
+
+    const result = {
+      thinking: "Response processed successfully.",
+      ocrText: translation,
+      hasError: false,
+      translation
+    };
+    console.log('Final processed result:', result);
+    return result;
+  } catch (error: any) {
+    console.error('Error processing response:', error);
     return {
-      thinking: "No response generated.",
-      ocrText: "No response generated.",
+      thinking: `Error processing response: ${error.message || "Unknown error"}`,
+      ocrText: `Error processing response. ${error.message || "Please try again."}`,
       hasError: true,
     };
   }
-
-  const candidate = response.candidates[0];
-  console.log('Processing candidate:', candidate);
-  let translation = "";
-
-  // Process all parts of the response
-  for (const part of candidate.content.parts) {
-    console.log('Processing response part:', part);
-    // Check for function calls in the response
-    if (part.functionCall) {
-      const functionCall = part.functionCall;
-      console.log('Found function call:', functionCall.name, functionCall.args);
-      switch (functionCall.name) {
-        case "setMappingTable":
-          if (tableUpdateCallbacks?.onMappingTableUpdate) {
-            console.log('Updating mapping table with entries:', functionCall.args.entries);
-            tableUpdateCallbacks.onMappingTableUpdate(functionCall.args.entries);
-          }
-          break;
-        case "setRelationshipsTable":
-          if (tableUpdateCallbacks?.onRelationshipsTableUpdate) {
-            console.log('Updating relationships table with entries:', functionCall.args.entries);
-            tableUpdateCallbacks.onRelationshipsTableUpdate(functionCall.args.entries);
-          }
-          break;
-      }
-      continue;
-    }
-
-    // Handle text content
-    if (part.text) {
-      console.log('Adding text content:', part.text);
-      translation += part.text;
-    }
-  }
-
-  const result = {
-    thinking: "Response processed successfully.",
-    ocrText: translation,
-    hasError: false,
-    translation
-  };
-  console.log('Final processed result:', result);
-  return result;
 }
 
 /**
@@ -517,6 +526,8 @@ Before beginning the translation:
    - E.g. omniscient formal narrator, or a character's personal internal monologue  
 
 ---
+
+🔹 AFTER TRANSLATION – CALL FUNCTION TO UPDATE TABLES:
 `;
 
   const options: GeminiOptions = {

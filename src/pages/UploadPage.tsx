@@ -44,7 +44,6 @@ const UploadPage: React.FC = () => {
   // --- Effects ---
   useEffect(() => {
     if (htmlContent.trim()) {
-      // Match <img ... src="..." ...> or <img ... src='...' ...>
       const imgRegex = /<img[^>]+src\s*=\s*(['"])(.*?)\1/gi;
       let match;
       const links: string[] = [];

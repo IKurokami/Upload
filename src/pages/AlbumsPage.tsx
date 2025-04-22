@@ -66,7 +66,6 @@ const AlbumsPage: React.FC<AlbumsPageProps> = () => {
   }, []);
 
   useEffect(() => {
-    // Filter albums based on search query and sort by createdAt desc
     const filtered = savedAlbums
       .filter((album) =>
         album.albumName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -78,10 +77,8 @@ const AlbumsPage: React.FC<AlbumsPageProps> = () => {
   const handleOpenRenameDialog = (albumId: number) => {
     const currentAlbum = savedAlbums.find((album) => album.id === albumId);
     if (currentAlbum) {
-      // Set state before opening dialog
       setNewAlbumName(currentAlbum.albumName);
       setSelectedAlbumId(albumId);
-      // Open dialog after states are set
       setTimeout(() => {
         setRenameDialogOpen(true);
       }, 0);
